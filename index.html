@@ -7,6 +7,15 @@
     body {
       font-family: Arial;
       padding: 20px;
+      background: url('<!DOCTYPE html>
+<html>
+<head>
+  <title>Controle de Entregas</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
       background: url('https://static.vecteezy.com/ti/vetor-gratis/p1/29246153-fundo-de-sistema-geometrico-e-de-conexao-de-tecnologia-de-alta-tecnologia-com-resumo-de-dados-digitais-vetor.jpg') no-repeat center center fixed;
       background-size: cover;
     }
@@ -301,6 +310,333 @@ async function salvarSelecionados() {
   });
 
   alert("Atualização em lote concluída!");
+  carregarDados();
+}
+
+carregarDados();
+
+</script>
+
+</body>
+</html>') no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    .container {
+      background: rgba(255,255,255,0.95);
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+
+    .menu button {
+      background: #333;
+      color: white;
+    }
+
+    .cards {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .card {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      color: white;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .total { background: #007bff; }
+    .pendente { background: #dc3545; }
+    .respondido { background: #28a745; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th {
+      background: #007bff;
+      color: white;
+      padding: 6px;
+    }
+
+    td {
+      padding: 5px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+    }
+
+    tr:hover {
+      background: #eef6ff;
+    }
+
+    .status-respondido { background: #28a745; color: white; }
+    .status-pendente { background: #dc3545; color: white; }
+
+    select, input {
+      width: 100%;
+    }
+
+    .btn-lote {
+      background: orange;
+      color: white;
+      margin-bottom: 10px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>🚚 Entregas Pendentes</h2>
+
+<div class="menu">
+  <button onclick="trocarAba('atuais')">📦 Pedidos Atuais</button>
+  <button onclick="trocarAba('anteriores')">📚 Pedidos Anteriores</button>
+</div>
+
+<div class="cards">
+  <div class="card total" id="totalCard">Total: 0</div>
+  <div class="card pendente" id="pendenteCard">Pendentes: 0</div>
+  <div class="card respondido" id="respondidoCard">Respondidos: 0</div>
+</div>
+
+<button class="btn-lote" onclick="salvarSelecionados()">💾 Salvar Selecionados</button>
+
+<!-- TABELA ATUAL -->
+<table id="tabela">
+<thead>
+<tr>
+<th><input type="checkbox" onclick="selecionarTodos(this)"></th>
+<th>Pedido</th>
+<th>NF</th>
+<th>Transp</th>
+<th>Cidade</th>
+<th>Coleta</th>
+<th>Previsão</th>
+<th>UF</th>
+<th>Atraso dias</th>
+<th>Status</th>
+<th>Agendado</th>
+<th>Em rota</th>
+<th>Status Resp</th>
+<th>Atraso?</th>
+<th>Motivo</th>
+<th>Data Resp</th>
+<th>Ação</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<!-- TABELA HISTÓRICO -->
+<table id="tabelaAnteriores" style="display:none;">
+<thead>
+<tr>
+<th>Pedido</th>
+<th>NF</th>
+<th>Transp</th>
+<th>Cidade</th>
+<th>Coleta</th>
+<th>Previsão</th>
+<th>UF</th>
+<th>Atraso dias</th>
+<th>Status</th>
+<th>Agendado</th>
+<th>Em rota</th>
+<th>Atraso?</th>
+<th>Motivo</th>
+<th>Data Resp</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+</div>
+
+<script>
+
+const API_URL = "https://script.google.com/macros/s/AKfycbwI4rXeSdViPoPqPgrQqDfBt5dbFmfo1oCeP3VPv-K0b7WelVm0xpDcfIl3yNguK5OL/exec";
+
+function formatarData(data) {
+  if (!data || isNaN(new Date(data))) return data;
+  const d = new Date(data);
+  return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()}`;
+}
+
+function trocarAba(tipo) {
+  document.getElementById("tabela").style.display = tipo === "atuais" ? "table" : "none";
+  document.getElementById("tabelaAnteriores").style.display = tipo === "anteriores" ? "table" : "none";
+}
+
+function selecionarTodos(master) {
+  document.querySelectorAll(".checkLinha").forEach(c => c.checked = master.checked);
+}
+
+async function carregarDados() {
+
+  const res = await fetch(API_URL);
+  const json = await res.json();
+
+  carregarTabelaAtual(json.dados);
+  carregarTabelaAnteriores(json.anteriores);
+}
+
+function carregarTabelaAtual(dados) {
+
+  const tbody = document.querySelector("#tabela tbody");
+  tbody.innerHTML = "";
+
+  let total = 0, pendentes = 0, respondidos = 0;
+
+  dados.slice(1).forEach(linha => {
+
+    const atrasoAtual = linha[11] || "";
+    const motivoAtual = linha[12] || "";
+    const dataResposta = linha[13] || "";
+
+    const status = atrasoAtual ? "RESPONDIDO" : "PENDENTE";
+
+    total++;
+    if (status === "RESPONDIDO") respondidos++;
+    else pendentes++;
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td><input type="checkbox" class="checkLinha"></td>
+      <td>${linha[0]}</td>
+      <td>${linha[1]}</td>
+      <td>${linha[2]}</td>
+      <td>${linha[3]}</td>
+      <td>${formatarData(linha[4])}</td>
+      <td>${formatarData(linha[5])}</td>
+      <td>${linha[6]}</td>
+      <td>${linha[7]}</td>
+      <td>${linha[8]}</td>
+      <td>${linha[9]}</td>
+      <td>${formatarData(linha[10])}</td>
+
+      <td class="${status === 'RESPONDIDO' ? 'status-respondido' : 'status-pendente'}">
+        ${status}
+      </td>
+
+      <td>
+        <select>
+          <option value="">-</option>
+          <option value="SIM" ${atrasoAtual === "SIM" ? "selected" : ""}>SIM</option>
+          <option value="NAO" ${atrasoAtual === "NAO" ? "selected" : ""}>NÃO</option>
+        </select>
+      </td>
+
+      <td><input value="${motivoAtual}" /></td>
+
+      <td>${formatarData(dataResposta)}</td>
+
+      <td><button onclick="salvar(this)">Salvar</button></td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById("totalCard").innerText = `Total: ${total}`;
+  document.getElementById("pendenteCard").innerText = `Pendentes: ${pendentes}`;
+  document.getElementById("respondidoCard").innerText = `Respondidos: ${respondidos}`;
+}
+
+function carregarTabelaAnteriores(dados) {
+
+  const tbody = document.querySelector("#tabelaAnteriores tbody");
+  tbody.innerHTML = "";
+
+  dados.slice(1).forEach(linha => {
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${linha[0]}</td>
+      <td>${linha[1]}</td>
+      <td>${linha[2]}</td>
+      <td>${linha[3]}</td>
+      <td>${formatarData(linha[4])}</td>
+      <td>${formatarData(linha[5])}</td>
+      <td>${linha[6]}</td>
+      <td>${linha[7]}</td>
+      <td>${linha[8]}</td>
+      <td>${linha[9]}</td>
+      <td>${formatarData(linha[10])}</td>
+      <td>${linha[11]}</td>
+      <td>${linha[12]}</td>
+      <td>${formatarData(linha[13])}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+async function salvar(btn) {
+  const tr = btn.parentElement.parentElement;
+  const tds = tr.querySelectorAll("td");
+
+  const nf = tds[2].innerText;
+  const atraso = tds[13].querySelector("select").value;
+  const motivo = tds[14].querySelector("input").value;
+
+  await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ nf, atraso, motivo })
+  });
+
+  alert("Atualizado!");
+  carregarDados();
+}
+
+async function salvarSelecionados() {
+
+  const linhas = document.querySelectorAll("#tabela tbody tr");
+  const lote = [];
+
+  linhas.forEach(tr => {
+    const check = tr.querySelector(".checkLinha");
+
+    if (check && check.checked) {
+      const tds = tr.querySelectorAll("td");
+
+      const nf = tds[2].innerText;
+      const atraso = tds[13].querySelector("select").value;
+      const motivo = tds[14].querySelector("input").value;
+
+      if (atraso) {
+        lote.push({ nf, atraso, motivo });
+      }
+    }
+  });
+
+  if (lote.length === 0) {
+    alert("Selecione pelo menos uma linha!");
+    return;
+  }
+
+  await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ lote })
+  });
+
+  alert("Lote atualizado!");
   carregarDados();
 }
 
