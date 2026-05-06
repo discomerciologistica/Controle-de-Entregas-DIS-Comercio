@@ -7,318 +7,7 @@
     body {
       font-family: Arial;
       padding: 20px;
-      background: url('<!DOCTYPE html>
-<html>
-<head>
-  <title>Controle de Entregas</title>
-
-  <style>
-    body {
-      font-family: Arial;
-      padding: 20px;
       background: url('https://static.vecteezy.com/ti/vetor-gratis/p1/29246153-fundo-de-sistema-geometrico-e-de-conexao-de-tecnologia-de-alta-tecnologia-com-resumo-de-dados-digitais-vetor.jpg') no-repeat center center fixed;
-      background-size: cover;
-    }
-
-    .container {
-      background: rgba(255,255,255,0.95);
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-    }
-
-    .filtros button {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 8px;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      margin-right: 10px;
-    }
-
-    .btn-todos { background: #007bff; }
-    .btn-pendente { background: #dc3545; }
-    .btn-respondido { background: #28a745; }
-
-    .ativo {
-      box-shadow: 0 0 0 3px rgba(0,0,0,0.2);
-    }
-
-    .cards {
-      display: flex;
-      gap: 15px;
-      margin: 15px 0;
-    }
-
-    .card {
-      flex: 1;
-      padding: 15px;
-      border-radius: 10px;
-      color: white;
-      text-align: center;
-      font-weight: bold;
-    }
-
-    .total { background: #007bff; }
-    .pendente { background: #dc3545; }
-    .respondido { background: #28a745; }
-
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 15px;
-      background: white;
-    }
-
-    th {
-      background: #007bff;
-      color: white;
-      padding: 8px;
-    }
-
-    td {
-      padding: 6px;
-      border-bottom: 1px solid #ddd;
-      text-align: center;
-    }
-
-    tr:nth-child(even) {
-      background: #f9f9f9;
-    }
-
-    tr:hover {
-      background: #e9f3ff;
-    }
-
-    .status-respondido {
-      background: #28a745;
-      color: white;
-      font-weight: bold;
-    }
-
-    .status-pendente {
-      background: #dc3545;
-      color: white;
-      font-weight: bold;
-    }
-
-    select, input {
-      width: 100%;
-    }
-
-    .acoes {
-      margin-top: 10px;
-    }
-
-    .btn-lote {
-      background: #ff9800;
-      color: white;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-  </style>
-</head>
-
-<body>
-
-<div class="container">
-
-<h2>🚚 Entregas Pendentes</h2>
-
-<div class="filtros">
-  <button class="btn-todos ativo" onclick="filtrar('TODOS', this)">Todos</button>
-  <button class="btn-pendente" onclick="filtrar('PENDENTE', this)">Pendentes</button>
-  <button class="btn-respondido" onclick="filtrar('RESPONDIDO', this)">Respondidos</button>
-</div>
-
-<div class="cards">
-  <div class="card total" id="totalCard">Total: 0</div>
-  <div class="card pendente" id="pendenteCard">Pendentes: 0</div>
-  <div class="card respondido" id="respondidoCard">Respondidos: 0</div>
-</div>
-
-<div class="acoes">
-  <button class="btn-lote" onclick="salvarSelecionados()">💾 Salvar Selecionados</button>
-</div>
-
-<table id="tabela">
-  <thead>
-    <tr>
-      <th><input type="checkbox" onclick="selecionarTodos(this)"></th>
-      <th>Pedido</th>
-      <th>NF</th>
-      <th>Transp</th>
-      <th>Cidade</th>
-      <th>Coleta</th>
-      <th>Previsão</th>
-      <th>UF</th>
-      <th>Atraso dias</th>
-      <th>Status</th>
-      <th>Agendado</th>
-      <th>Em rota</th>
-      <th>Status Resp</th>
-      <th>Atraso?</th>
-      <th>Motivo</th>
-      <th>Data Resp</th>
-      <th>Ação</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-</div>
-
-<script>
-
-const API_URL = "https://script.google.com/macros/s/AKfycbwI4rXeSdViPoPqPgrQqDfBt5dbFmfo1oCeP3VPv-K0b7WelVm0xpDcfIl3yNguK5OL/exec";
-let filtroAtual = "TODOS";
-
-function formatarData(data) {
-  if (!data || isNaN(new Date(data))) return data;
-  const d = new Date(data);
-  return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()}`;
-}
-
-function filtrar(tipo, btn) {
-  filtroAtual = tipo;
-  document.querySelectorAll(".filtros button").forEach(b => b.classList.remove("ativo"));
-  btn.classList.add("ativo");
-  carregarDados();
-}
-
-function selecionarTodos(master) {
-  document.querySelectorAll(".checkLinha").forEach(c => c.checked = master.checked);
-}
-
-async function carregarDados() {
-  const res = await fetch(API_URL);
-  const dados = await res.json();
-
-  const tbody = document.querySelector("#tabela tbody");
-  tbody.innerHTML = "";
-
-  let total = 0, pendentes = 0, respondidos = 0;
-
-  dados.slice(1).forEach(linha => {
-
-    const atrasoAtual = linha[11] || "";
-    const motivoAtual = linha[12] || "";
-    const dataResposta = linha[13] || "";
-
-    const status = atrasoAtual ? "RESPONDIDO" : "PENDENTE";
-
-    total++;
-    if (status === "RESPONDIDO") respondidos++;
-    else pendentes++;
-
-    if (filtroAtual === "PENDENTE" && status !== "PENDENTE") return;
-    if (filtroAtual === "RESPONDIDO" && status !== "RESPONDIDO") return;
-
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td><input type="checkbox" class="checkLinha"></td>
-      <td>${linha[0]}</td>
-      <td>${linha[1]}</td>
-      <td>${linha[2]}</td>
-      <td>${linha[3]}</td>
-      <td>${formatarData(linha[4])}</td>
-      <td>${formatarData(linha[5])}</td>
-      <td>${linha[6]}</td>
-      <td>${linha[7]}</td>
-      <td>${linha[8]}</td>
-      <td>${linha[9]}</td>
-      <td>${formatarData(linha[10])}</td>
-
-      <td class="${status === 'RESPONDIDO' ? 'status-respondido' : 'status-pendente'}">
-        ${status}
-      </td>
-
-      <td>
-        <select>
-          <option value="">-</option>
-          <option value="SIM" ${atrasoAtual === "SIM" ? "selected" : ""}>SIM</option>
-          <option value="NAO" ${atrasoAtual === "NAO" ? "selected" : ""}>NÃO</option>
-        </select>
-      </td>
-
-      <td><input value="${motivoAtual}" /></td>
-
-      <td>${formatarData(dataResposta)}</td>
-
-      <td><button onclick="salvar(this)">Salvar</button></td>
-    `;
-
-    tbody.appendChild(tr);
-  });
-
-  document.getElementById("totalCard").innerText = `Total: ${total}`;
-  document.getElementById("pendenteCard").innerText = `Pendentes: ${pendentes}`;
-  document.getElementById("respondidoCard").innerText = `Respondidos: ${respondidos}`;
-}
-
-async function salvar(btn) {
-  const tr = btn.parentElement.parentElement;
-  const tds = tr.querySelectorAll("td");
-
-  const nf = tds[2].innerText;
-  const atraso = tds[13].querySelector("select").value;
-  const motivo = tds[14].querySelector("input").value;
-
-  await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({ nf, atraso, motivo })
-  });
-
-  alert("Atualizado!");
-  carregarDados();
-}
-
-async function salvarSelecionados() {
-
-  const linhas = document.querySelectorAll("#tabela tbody tr");
-  const lote = [];
-
-  linhas.forEach(tr => {
-    const check = tr.querySelector(".checkLinha");
-
-    if (check && check.checked) {
-      const tds = tr.querySelectorAll("td");
-
-      const nf = tds[2].innerText;
-      const atraso = tds[13].querySelector("select").value;
-      const motivo = tds[14].querySelector("input").value;
-
-      if (atraso) {
-        lote.push({ nf, atraso, motivo });
-      }
-    }
-  });
-
-  if (lote.length === 0) {
-    alert("Selecione pelo menos uma linha!");
-    return;
-  }
-
-  await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({ lote })
-  });
-
-  alert("Atualização em lote concluída!");
-  carregarDados();
-}
-
-carregarDados();
-
-</script>
-
-</body>
-</html>') no-repeat center center fixed;
       background-size: cover;
     }
 
@@ -329,36 +18,17 @@ carregarDados();
     }
 
     button {
-      padding: 8px 12px;
-      border: none;
+      padding: 8px;
       border-radius: 6px;
+      border: none;
       cursor: pointer;
-      margin-right: 5px;
     }
 
     .menu button {
       background: #333;
       color: white;
+      margin-right: 5px;
     }
-
-    .cards {
-      display: flex;
-      gap: 10px;
-      margin: 15px 0;
-    }
-
-    .card {
-      flex: 1;
-      padding: 10px;
-      border-radius: 8px;
-      color: white;
-      text-align: center;
-      font-weight: bold;
-    }
-
-    .total { background: #007bff; }
-    .pendente { background: #dc3545; }
-    .respondido { background: #28a745; }
 
     table {
       width: 100%;
@@ -369,31 +39,16 @@ carregarDados();
     th {
       background: #007bff;
       color: white;
+    }
+
+    td, th {
       padding: 6px;
-    }
-
-    td {
-      padding: 5px;
-      border-bottom: 1px solid #ddd;
       text-align: center;
+      border-bottom: 1px solid #ddd;
     }
 
-    tr:hover {
-      background: #eef6ff;
-    }
-
-    .status-respondido { background: #28a745; color: white; }
-    .status-pendente { background: #dc3545; color: white; }
-
-    select, input {
-      width: 100%;
-    }
-
-    .btn-lote {
-      background: orange;
-      color: white;
-      margin-bottom: 10px;
-    }
+    .status-respondido { background: green; color: white; }
+    .status-pendente { background: red; color: white; }
 
   </style>
 </head>
@@ -402,62 +57,34 @@ carregarDados();
 
 <div class="container">
 
-<h2>🚚 Entregas Pendentes</h2>
+<h2>🚚 Controle de Entregas</h2>
 
 <div class="menu">
-  <button onclick="trocarAba('atuais')">📦 Pedidos Atuais</button>
-  <button onclick="trocarAba('anteriores')">📚 Pedidos Anteriores</button>
+  <button onclick="trocarAba('atuais')">Pedidos Atuais</button>
+  <button onclick="trocarAba('anteriores')">Pedidos Anteriores</button>
 </div>
 
-<div class="cards">
-  <div class="card total" id="totalCard">Total: 0</div>
-  <div class="card pendente" id="pendenteCard">Pendentes: 0</div>
-  <div class="card respondido" id="respondidoCard">Respondidos: 0</div>
-</div>
+<br>
 
-<button class="btn-lote" onclick="salvarSelecionados()">💾 Salvar Selecionados</button>
-
-<!-- TABELA ATUAL -->
 <table id="tabela">
 <thead>
 <tr>
-<th><input type="checkbox" onclick="selecionarTodos(this)"></th>
 <th>Pedido</th>
 <th>NF</th>
-<th>Transp</th>
-<th>Cidade</th>
-<th>Coleta</th>
-<th>Previsão</th>
-<th>UF</th>
-<th>Atraso dias</th>
 <th>Status</th>
-<th>Agendado</th>
-<th>Em rota</th>
-<th>Status Resp</th>
 <th>Atraso?</th>
 <th>Motivo</th>
-<th>Data Resp</th>
 <th>Ação</th>
 </tr>
 </thead>
 <tbody></tbody>
 </table>
 
-<!-- TABELA HISTÓRICO -->
 <table id="tabelaAnteriores" style="display:none;">
 <thead>
 <tr>
 <th>Pedido</th>
 <th>NF</th>
-<th>Transp</th>
-<th>Cidade</th>
-<th>Coleta</th>
-<th>Previsão</th>
-<th>UF</th>
-<th>Atraso dias</th>
-<th>Status</th>
-<th>Agendado</th>
-<th>Em rota</th>
 <th>Atraso?</th>
 <th>Motivo</th>
 <th>Data Resp</th>
@@ -472,19 +99,9 @@ carregarDados();
 
 const API_URL = "https://script.google.com/macros/s/AKfycbwI4rXeSdViPoPqPgrQqDfBt5dbFmfo1oCeP3VPv-K0b7WelVm0xpDcfIl3yNguK5OL/exec";
 
-function formatarData(data) {
-  if (!data || isNaN(new Date(data))) return data;
-  const d = new Date(data);
-  return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()}`;
-}
-
 function trocarAba(tipo) {
   document.getElementById("tabela").style.display = tipo === "atuais" ? "table" : "none";
   document.getElementById("tabelaAnteriores").style.display = tipo === "anteriores" ? "table" : "none";
-}
-
-function selecionarTodos(master) {
-  document.querySelectorAll(".checkLinha").forEach(c => c.checked = master.checked);
 }
 
 async function carregarDados() {
@@ -492,73 +109,35 @@ async function carregarDados() {
   const res = await fetch(API_URL);
   const json = await res.json();
 
-  carregarTabelaAtual(json.dados);
-  carregarTabelaAnteriores(json.anteriores);
+  carregarAtual(json.dados);
+  carregarAnteriores(json.anteriores);
 }
 
-function carregarTabelaAtual(dados) {
+function carregarAtual(dados) {
 
   const tbody = document.querySelector("#tabela tbody");
   tbody.innerHTML = "";
 
-  let total = 0, pendentes = 0, respondidos = 0;
-
   dados.slice(1).forEach(linha => {
 
-    const atrasoAtual = linha[11] || "";
-    const motivoAtual = linha[12] || "";
-    const dataResposta = linha[13] || "";
-
-    const status = atrasoAtual ? "RESPONDIDO" : "PENDENTE";
-
-    total++;
-    if (status === "RESPONDIDO") respondidos++;
-    else pendentes++;
+    const status = linha[11] ? "RESPONDIDO" : "PENDENTE";
 
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td><input type="checkbox" class="checkLinha"></td>
       <td>${linha[0]}</td>
       <td>${linha[1]}</td>
-      <td>${linha[2]}</td>
-      <td>${linha[3]}</td>
-      <td>${formatarData(linha[4])}</td>
-      <td>${formatarData(linha[5])}</td>
-      <td>${linha[6]}</td>
-      <td>${linha[7]}</td>
-      <td>${linha[8]}</td>
-      <td>${linha[9]}</td>
-      <td>${formatarData(linha[10])}</td>
-
-      <td class="${status === 'RESPONDIDO' ? 'status-respondido' : 'status-pendente'}">
-        ${status}
-      </td>
-
-      <td>
-        <select>
-          <option value="">-</option>
-          <option value="SIM" ${atrasoAtual === "SIM" ? "selected" : ""}>SIM</option>
-          <option value="NAO" ${atrasoAtual === "NAO" ? "selected" : ""}>NÃO</option>
-        </select>
-      </td>
-
-      <td><input value="${motivoAtual}" /></td>
-
-      <td>${formatarData(dataResposta)}</td>
-
+      <td class="${status === 'RESPONDIDO' ? 'status-respondido' : 'status-pendente'}">${status}</td>
+      <td><select><option>SIM</option><option>NAO</option></select></td>
+      <td><input></td>
       <td><button onclick="salvar(this)">Salvar</button></td>
     `;
 
     tbody.appendChild(tr);
   });
-
-  document.getElementById("totalCard").innerText = `Total: ${total}`;
-  document.getElementById("pendenteCard").innerText = `Pendentes: ${pendentes}`;
-  document.getElementById("respondidoCard").innerText = `Respondidos: ${respondidos}`;
 }
 
-function carregarTabelaAnteriores(dados) {
+function carregarAnteriores(dados) {
 
   const tbody = document.querySelector("#tabelaAnteriores tbody");
   tbody.innerHTML = "";
@@ -570,18 +149,9 @@ function carregarTabelaAnteriores(dados) {
     tr.innerHTML = `
       <td>${linha[0]}</td>
       <td>${linha[1]}</td>
-      <td>${linha[2]}</td>
-      <td>${linha[3]}</td>
-      <td>${formatarData(linha[4])}</td>
-      <td>${formatarData(linha[5])}</td>
-      <td>${linha[6]}</td>
-      <td>${linha[7]}</td>
-      <td>${linha[8]}</td>
-      <td>${linha[9]}</td>
-      <td>${formatarData(linha[10])}</td>
       <td>${linha[11]}</td>
       <td>${linha[12]}</td>
-      <td>${formatarData(linha[13])}</td>
+      <td>${linha[13]}</td>
     `;
 
     tbody.appendChild(tr);
@@ -589,54 +159,20 @@ function carregarTabelaAnteriores(dados) {
 }
 
 async function salvar(btn) {
+
   const tr = btn.parentElement.parentElement;
   const tds = tr.querySelectorAll("td");
 
-  const nf = tds[2].innerText;
-  const atraso = tds[13].querySelector("select").value;
-  const motivo = tds[14].querySelector("input").value;
+  const nf = tds[1].innerText;
+  const atraso = tds[3].querySelector("select").value;
+  const motivo = tds[4].querySelector("input").value;
 
   await fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({ nf, atraso, motivo })
   });
 
-  alert("Atualizado!");
-  carregarDados();
-}
-
-async function salvarSelecionados() {
-
-  const linhas = document.querySelectorAll("#tabela tbody tr");
-  const lote = [];
-
-  linhas.forEach(tr => {
-    const check = tr.querySelector(".checkLinha");
-
-    if (check && check.checked) {
-      const tds = tr.querySelectorAll("td");
-
-      const nf = tds[2].innerText;
-      const atraso = tds[13].querySelector("select").value;
-      const motivo = tds[14].querySelector("input").value;
-
-      if (atraso) {
-        lote.push({ nf, atraso, motivo });
-      }
-    }
-  });
-
-  if (lote.length === 0) {
-    alert("Selecione pelo menos uma linha!");
-    return;
-  }
-
-  await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({ lote })
-  });
-
-  alert("Lote atualizado!");
+  alert("Salvo!");
   carregarDados();
 }
 
