@@ -222,7 +222,10 @@ function selecionarTodos(master) {
 async function carregarDados() {
 
   const res = await fetch(API_URL);
-  const dados = await res.json();
+  const json = await res.json();
+
+const dados = json.dados;
+const anteriores = json.anteriores;
 
   const tbody = document.querySelector("#tabela tbody");
 
