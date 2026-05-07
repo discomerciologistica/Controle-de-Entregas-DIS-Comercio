@@ -137,6 +137,11 @@
 
 <h2>🚚 Entregas Pendentes</h2>
 
+  <div style="margin-bottom:15px;">
+  <button onclick="mostrarTabela('atuais')">📦 Pedidos Atuais</button>
+  <button onclick="mostrarTabela('anteriores')">📚 Pedidos Anteriores</button>
+</div>
+  
 <div class="filtros">
   <button class="btn-todos ativo" onclick="filtrar('TODOS', this)">Todos</button>
   <button class="btn-pendente" onclick="filtrar('PENDENTE', this)">Pendentes</button>
@@ -185,6 +190,22 @@
       <th>Ação</th>
     </tr>
   </thead>
+  <tbody></tbody>
+</table>
+
+  <table id="tabelaAnteriores" style="display:none;">
+  <thead>
+    <tr>
+      <th>Pedido</th>
+      <th>NF</th>
+      <th>Transportadora</th>
+      <th>Cidade</th>
+      <th>Atraso?</th>
+      <th>Motivo</th>
+      <th>Data Resp</th>
+    </tr>
+  </thead>
+
   <tbody></tbody>
 </table>
 
@@ -393,7 +414,19 @@ async function salvarSelecionados() {
   });
 
   alert("Atualização em lote concluída!");
+function mostrarTabela(tipo) {
 
+  if (tipo === "atuais") {
+
+    document.getElementById("tabela").style.display = "table";
+    document.getElementById("tabelaAnteriores").style.display = "none";
+
+  } else {
+
+    document.getElementById("tabela").style.display = "none";
+    document.getElementById("tabelaAnteriores").style.display = "table";
+  }
+}
   carregarDados();
 }
 
