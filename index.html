@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Controle de Entregas</title>
 
   <style>
+
     body {
       font-family: Arial;
       padding: 20px;
@@ -12,10 +14,29 @@
     }
 
     .container {
-      background: rgba(255,255,255,0.95);
+      background: rgba(255,255,255,0.96);
       padding: 20px;
       border-radius: 12px;
       box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    .menu {
+      margin-bottom: 15px;
+    }
+
+    .menu button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      background: #333;
+      color: white;
+      cursor: pointer;
+      margin-right: 10px;
+      font-weight: bold;
     }
 
     .filtros button {
@@ -135,96 +156,130 @@
 
 <div class="container">
 
-<h2>🚚 Entregas Pendentes</h2>
+<h2>🚚 Controle de Entregas</h2>
 
-  <div style="margin-bottom:15px;">
+<div class="menu">
   <button onclick="mostrarTabela('atuais')">📦 Pedidos Atuais</button>
   <button onclick="mostrarTabela('anteriores')">📚 Pedidos Anteriores</button>
 </div>
-  
-<div class="filtros">
-  <button class="btn-todos ativo" onclick="filtrar('TODOS', this)">Todos</button>
-  <button class="btn-pendente" onclick="filtrar('PENDENTE', this)">Pendentes</button>
-  <button class="btn-respondido" onclick="filtrar('RESPONDIDO', this)">Respondidos</button>
-</div>
 
-<div class="cards">
+<div id="areaAtual">
 
-  <div class="card total" id="totalCard">
-    Todos: <span class="numero-total">0</span>
+  <div class="filtros">
+    <button class="btn-todos ativo" onclick="filtrar('TODOS', this)">Todos</button>
+    <button class="btn-pendente" onclick="filtrar('PENDENTE', this)">Pendentes</button>
+    <button class="btn-respondido" onclick="filtrar('RESPONDIDO', this)">Respondidos</button>
   </div>
 
-  <div class="card pendente" id="pendenteCard">
-    Pendentes: <span class="numero-pendente">0</span>
+  <div class="cards">
+
+    <div class="card total" id="totalCard">
+      Todos: <span class="numero-total">0</span>
+    </div>
+
+    <div class="card pendente" id="pendenteCard">
+      Pendentes: <span class="numero-pendente">0</span>
+    </div>
+
+    <div class="card respondido" id="respondidoCard">
+      Respondidos: <span class="numero-respondido">0</span>
+    </div>
+
   </div>
 
-  <div class="card respondido" id="respondidoCard">
-    Respondidos: <span class="numero-respondido">0</span>
+  <div class="acoes">
+    <button class="btn-lote" onclick="salvarSelecionados()">💾 Salvar Selecionados</button>
   </div>
+
+  <table id="tabela">
+    <thead>
+      <tr>
+        <th><input type="checkbox" onclick="selecionarTodos(this)"></th>
+        <th>Pedido</th>
+        <th>NF</th>
+        <th>Transp</th>
+        <th>Cidade</th>
+        <th>Coleta</th>
+        <th>Previsão</th>
+        <th>UF</th>
+        <th>Atraso dias</th>
+        <th>Status</th>
+        <th>Agendado</th>
+        <th>Em rota</th>
+        <th>Status Resp</th>
+        <th>Atraso?</th>
+        <th>Motivo</th>
+        <th>Data Resp</th>
+        <th>Ação</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
 </div>
 
-<div class="acoes">
-  <button class="btn-lote" onclick="salvarSelecionados()">💾 Salvar Selecionados</button>
+<div id="areaHistorico" style="display:none;">
+
+  <table id="tabelaHistorico">
+
+    <thead>
+      <tr>
+        <th>Pedido</th>
+        <th>NF</th>
+        <th>Transp</th>
+        <th>Cidade</th>
+        <th>Coleta</th>
+        <th>Previsão</th>
+        <th>UF</th>
+        <th>Atraso dias</th>
+        <th>Status</th>
+        <th>Agendado</th>
+        <th>Em rota</th>
+        <th>Atraso?</th>
+        <th>Motivo</th>
+        <th>Data Resp</th>
+      </tr>
+    </thead>
+
+    <tbody></tbody>
+
+  </table>
+
 </div>
-
-<table id="tabela">
-  <thead>
-    <tr>
-      <th><input type="checkbox" onclick="selecionarTodos(this)"></th>
-      <th>Pedido</th>
-      <th>NF</th>
-      <th>Transp</th>
-      <th>Cidade</th>
-      <th>Coleta</th>
-      <th>Previsão</th>
-      <th>UF</th>
-      <th>Atraso dias</th>
-      <th>Status</th>
-      <th>Agendado</th>
-      <th>Em rota</th>
-      <th>Status Resp</th>
-      <th>Atraso?</th>
-      <th>Motivo</th>
-      <th>Data Resp</th>
-      <th>Ação</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-  <table id="tabelaAnteriores" style="display:none;">
-  <thead>
-    <tr>
-      <th>Pedido</th>
-      <th>NF</th>
-      <th>Transportadora</th>
-      <th>Cidade</th>
-      <th>Atraso?</th>
-      <th>Motivo</th>
-      <th>Data Resp</th>
-    </tr>
-  </thead>
-
-  <tbody></tbody>
-</table>
 
 </div>
 
 <script>
 
 const API_URL = "https://script.google.com/macros/s/AKfycbwI4rXeSdViPoPqPgrQqDfBt5dbFmfo1oCeP3VPv-K0b7WelVm0xpDcfIl3yNguK5OL/exec";
+
 let filtroAtual = "TODOS";
 
+function mostrarTabela(tipo) {
+
+  if (tipo === "atuais") {
+
+    document.getElementById("areaAtual").style.display = "block";
+    document.getElementById("areaHistorico").style.display = "none";
+
+  } else {
+
+    document.getElementById("areaAtual").style.display = "none";
+    document.getElementById("areaHistorico").style.display = "block";
+  }
+}
+
 function formatarData(data) {
+
   if (!data || isNaN(new Date(data))) return data;
 
   const d = new Date(data);
 
-  return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()}`;
+  return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
 
 function filtrar(tipo, btn) {
+
   filtroAtual = tipo;
 
   document.querySelectorAll(".filtros button")
@@ -236,6 +291,7 @@ function filtrar(tipo, btn) {
 }
 
 function selecionarTodos(master) {
+
   document.querySelectorAll(".checkLinha")
     .forEach(c => c.checked = master.checked);
 }
@@ -243,10 +299,15 @@ function selecionarTodos(master) {
 async function carregarDados() {
 
   const res = await fetch(API_URL);
+
   const json = await res.json();
 
-const dados = json.dados;
-const anteriores = json.anteriores;
+  carregarTabelaAtual(json.dados);
+
+  carregarHistorico(json.anteriores);
+}
+
+function carregarTabelaAtual(dados) {
 
   const tbody = document.querySelector("#tabela tbody");
 
@@ -273,6 +334,7 @@ const anteriores = json.anteriores;
     }
 
     if (filtroAtual === "PENDENTE" && status !== "PENDENTE") return;
+
     if (filtroAtual === "RESPONDIDO" && status !== "RESPONDIDO") return;
 
     const tr = document.createElement("tr");
@@ -295,7 +357,10 @@ const anteriores = json.anteriores;
 
       <td>${formatarData(linha[10])}</td>
 
-      <td class="${status === 'RESPONDIDO' ? 'status-respondido' : 'status-pendente'}">
+      <td class="${status === 'RESPONDIDO'
+        ? 'status-respondido'
+        : 'status-pendente'}">
+
         ${status}
       </td>
 
@@ -337,6 +402,42 @@ const anteriores = json.anteriores;
 
   document.getElementById("respondidoCard").innerHTML =
     `Respondidos: <span class="numero-respondido">${respondidos}</span>`;
+}
+
+function carregarHistorico(dados) {
+
+  const tbody = document.querySelector("#tabelaHistorico tbody");
+
+  tbody.innerHTML = "";
+
+  dados.slice(1).forEach(linha => {
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+
+      <td>${linha[0]}</td>
+      <td>${linha[1]}</td>
+      <td>${linha[2]}</td>
+      <td>${linha[3]}</td>
+
+      <td>${formatarData(linha[4])}</td>
+      <td>${formatarData(linha[5])}</td>
+
+      <td>${linha[6]}</td>
+      <td>${linha[7]}</td>
+      <td>${linha[8]}</td>
+      <td>${linha[9]}</td>
+
+      <td>${formatarData(linha[10])}</td>
+
+      <td>${linha[11]}</td>
+      <td>${linha[12]}</td>
+      <td>${formatarData(linha[13])}</td>
+    `;
+
+    tbody.appendChild(tr);
+  });
 }
 
 async function salvar(btn) {
@@ -391,6 +492,7 @@ async function salvarSelecionados() {
         .querySelector("input").value;
 
       if (atraso) {
+
         lote.push({
           nf,
           atraso,
@@ -401,7 +503,9 @@ async function salvarSelecionados() {
   });
 
   if (lote.length === 0) {
+
     alert("Selecione pelo menos uma linha!");
+
     return;
   }
 
@@ -414,19 +518,7 @@ async function salvarSelecionados() {
   });
 
   alert("Atualização em lote concluída!");
-function mostrarTabela(tipo) {
 
-  if (tipo === "atuais") {
-
-    document.getElementById("tabela").style.display = "table";
-    document.getElementById("tabelaAnteriores").style.display = "none";
-
-  } else {
-
-    document.getElementById("tabela").style.display = "none";
-    document.getElementById("tabelaAnteriores").style.display = "table";
-  }
-}
   carregarDados();
 }
 
