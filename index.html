@@ -46,14 +46,31 @@
       flex: 1;
       padding: 15px;
       border-radius: 10px;
-      color: white;
+      background: white;
+      color: black;
       text-align: center;
+      font-weight: bold;
+      border: 1px solid #ddd;
+      font-size: 18px;
+    }
+
+    .numero-total {
+      color: #007bff;
+      font-size: 26px;
       font-weight: bold;
     }
 
-    .total { background: #007bff; }
-    .pendente { background: #dc3545; }
-    .respondido { background: #28a745; }
+    .numero-pendente {
+      color: #dc3545;
+      font-size: 26px;
+      font-weight: bold;
+    }
+
+    .numero-respondido {
+      color: #28a745;
+      font-size: 26px;
+      font-weight: bold;
+    }
 
     table {
       border-collapse: collapse;
@@ -127,9 +144,19 @@
 </div>
 
 <div class="cards">
-  <div class="card total" id="totalCard">Total: 0</div>
-  <div class="card pendente" id="pendenteCard">Pendentes: 0</div>
-  <div class="card respondido" id="respondidoCard">Respondidos: 0</div>
+
+  <div class="card total" id="totalCard">
+    Todos: <span class="numero-total">0</span>
+  </div>
+
+  <div class="card pendente" id="pendenteCard">
+    Pendentes: <span class="numero-pendente">0</span>
+  </div>
+
+  <div class="card respondido" id="respondidoCard">
+    Respondidos: <span class="numero-respondido">0</span>
+  </div>
+
 </div>
 
 <div class="acoes">
@@ -170,29 +197,40 @@ let filtroAtual = "TODOS";
 
 function formatarData(data) {
   if (!data || isNaN(new Date(data))) return data;
+
   const d = new Date(data);
+
   return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()}`;
 }
 
 function filtrar(tipo, btn) {
   filtroAtual = tipo;
-  document.querySelectorAll(".filtros button").forEach(b => b.classList.remove("ativo"));
+
+  document.querySelectorAll(".filtros button")
+    .forEach(b => b.classList.remove("ativo"));
+
   btn.classList.add("ativo");
+
   carregarDados();
 }
 
 function selecionarTodos(master) {
-  document.querySelectorAll(".checkLinha").forEach(c => c.checked = master.checked);
+  document.querySelectorAll(".checkLinha")
+    .forEach(c => c.checked = master.checked);
 }
 
 async function carregarDados() {
+
   const res = await fetch(API_URL);
   const dados = await res.json();
 
   const tbody = document.querySelector("#tabela tbody");
+
   tbody.innerHTML = "";
 
-  let total = 0, pendentes = 0, respondidos = 0;
+  let total = 0;
+  let pendentes = 0;
+  let respondidos = 0;
 
   dados.slice(1).forEach(linha => {
 
@@ -203,8 +241,12 @@ async function carregarDados() {
     const status = atrasoAtual ? "RESPONDIDO" : "PENDENTE";
 
     total++;
-    if (status === "RESPONDIDO") respondidos++;
-    else pendentes++;
+
+    if (status === "RESPONDIDO") {
+      respondidos++;
+    } else {
+      pendentes++;
+    }
 
     if (filtroAtual === "PENDENTE" && status !== "PENDENTE") return;
     if (filtroAtual === "RESPONDIDO" && status !== "RESPONDIDO") return;
@@ -213,16 +255,20 @@ async function carregarDados() {
 
     tr.innerHTML = `
       <td><input type="checkbox" class="checkLinha"></td>
+
       <td>${linha[0]}</td>
       <td>${linha[1]}</td>
       <td>${linha[2]}</td>
       <td>${linha[3]}</td>
+
       <td>${formatarData(linha[4])}</td>
       <td>${formatarData(linha[5])}</td>
+
       <td>${linha[6]}</td>
       <td>${linha[7]}</td>
       <td>${linha[8]}</td>
       <td>${linha[9]}</td>
+
       <td>${formatarData(linha[10])}</td>
 
       <td class="${status === 'RESPONDIDO' ? 'status-respondido' : 'status-pendente'}">
@@ -232,60 +278,100 @@ async function carregarDados() {
       <td>
         <select>
           <option value="">-</option>
-          <option value="SIM" ${atrasoAtual === "SIM" ? "selected" : ""}>SIM</option>
-          <option value="NAO" ${atrasoAtual === "NAO" ? "selected" : ""}>NÃO</option>
+
+          <option value="SIM"
+            ${atrasoAtual === "SIM" ? "selected" : ""}>
+            SIM
+          </option>
+
+          <option value="NAO"
+            ${atrasoAtual === "NAO" ? "selected" : ""}>
+            NÃO
+          </option>
         </select>
       </td>
 
-      <td><input value="${motivoAtual}" /></td>
+      <td>
+        <input value="${motivoAtual}" />
+      </td>
 
       <td>${formatarData(dataResposta)}</td>
 
-      <td><button onclick="salvar(this)">Salvar</button></td>
+      <td>
+        <button onclick="salvar(this)">Salvar</button>
+      </td>
     `;
 
     tbody.appendChild(tr);
   });
 
-  document.getElementById("totalCard").innerText = `Total: ${total}`;
-  document.getElementById("pendenteCard").innerText = `Pendentes: ${pendentes}`;
-  document.getElementById("respondidoCard").innerText = `Respondidos: ${respondidos}`;
+  document.getElementById("totalCard").innerHTML =
+    `Todos: <span class="numero-total">${total}</span>`;
+
+  document.getElementById("pendenteCard").innerHTML =
+    `Pendentes: <span class="numero-pendente">${pendentes}</span>`;
+
+  document.getElementById("respondidoCard").innerHTML =
+    `Respondidos: <span class="numero-respondido">${respondidos}</span>`;
 }
 
 async function salvar(btn) {
+
   const tr = btn.parentElement.parentElement;
+
   const tds = tr.querySelectorAll("td");
 
   const nf = tds[2].innerText;
-  const atraso = tds[13].querySelector("select").value;
-  const motivo = tds[14].querySelector("input").value;
+
+  const atraso = tds[13]
+    .querySelector("select").value;
+
+  const motivo = tds[14]
+    .querySelector("input").value;
 
   await fetch(API_URL, {
     method: "POST",
-    body: JSON.stringify({ nf, atraso, motivo })
+
+    body: JSON.stringify({
+      nf,
+      atraso,
+      motivo
+    })
   });
 
   alert("Atualizado!");
+
   carregarDados();
 }
 
 async function salvarSelecionados() {
 
   const linhas = document.querySelectorAll("#tabela tbody tr");
+
   const lote = [];
 
   linhas.forEach(tr => {
+
     const check = tr.querySelector(".checkLinha");
 
     if (check && check.checked) {
+
       const tds = tr.querySelectorAll("td");
 
       const nf = tds[2].innerText;
-      const atraso = tds[13].querySelector("select").value;
-      const motivo = tds[14].querySelector("input").value;
+
+      const atraso = tds[13]
+        .querySelector("select").value;
+
+      const motivo = tds[14]
+        .querySelector("input").value;
 
       if (atraso) {
-        lote.push({ nf, atraso, motivo });
+        lote.push({
+          nf,
+          atraso,
+          motivo
+        });
       }
     }
   });
@@ -297,10 +383,14 @@ async function salvarSelecionados() {
 
   await fetch(API_URL, {
     method: "POST",
-    body: JSON.stringify({ lote })
+
+    body: JSON.stringify({
+      lote
+    })
   });
 
   alert("Atualização em lote concluída!");
+
   carregarDados();
 }
 
