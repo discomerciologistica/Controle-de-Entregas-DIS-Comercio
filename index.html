@@ -205,6 +205,12 @@ tr.atraso-alto:hover {
 
 </div>
 
+  <div class="tabela-wrapper">
+  <table id="tabela">
+    ...
+  </table>
+</div>
+
 <script>
 
 const API_URL = "https://script.google.com/macros/s/AKfycbwI4rXeSdViPoPqPgrQqDfBt5dbFmfo1oCeP3VPv-K0b7WelVm0xpDcfIl3yNguK5OL/exec";
@@ -274,6 +280,10 @@ async function carregarDados() {
     if (filtroAtual === "RESPONDIDO" && status !== "RESPONDIDO") return;
 
     const tr = document.createElement("tr");
+    const diasAtraso = parseInt(linha[7]) || 0;
+if (diasAtraso > 5) {
+  tr.classList.add("atraso-alto");
+}
 
     tr.innerHTML = `
       <td><input type="checkbox" class="checkLinha"></td>
