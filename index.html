@@ -221,10 +221,17 @@ function selecionarTodos(master) {
 
 async function carregarDados() {
 
+  const tbody = document.querySelector("#tabela tbody");
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="17" style="text-align:center; padding: 30px; color: #888; font-size: 16px;">
+        ⏳ Carregando dados...
+      </td>
+    </tr>
+  `;
+
   const res = await fetch(API_URL);
   const dados = await res.json();
-
-  const tbody = document.querySelector("#tabela tbody");
 
   tbody.innerHTML = "";
 
