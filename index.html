@@ -371,7 +371,17 @@ async function salvar(btn) {
     })
   });
 
-  alert("Atualizado!");
+  btn.textContent = "✅ Salvo!";
+btn.style.background = "#28a745";
+btn.style.color = "white";
+btn.disabled = true;
+
+setTimeout(() => {
+  btn.textContent = "Salvar";
+  btn.style.background = "";
+  btn.style.color = "";
+  btn.disabled = false;
+}, 2000);
 
   carregarDados();
 }
@@ -421,8 +431,17 @@ async function salvarSelecionados() {
     })
   });
 
-  alert("Atualização em lote concluída!");
+  const btnLote = document.querySelector(".btn-lote");
+btnLote.textContent = "✅ Lote Salvo!";
+btnLote.style.background = "#28a745";
+btnLote.disabled = true;
 
+setTimeout(() => {
+  btnLote.textContent = "💾 Salvar Selecionados";
+  btnLote.style.background = "#ff9800";
+  btnLote.disabled = false;
+}, 2000);
+  
   carregarDados();
 }
 
