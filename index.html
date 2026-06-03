@@ -175,17 +175,7 @@ tr.atraso-alto:hover {
 </div>
 
 <div class="acoes">
-
-  <input type="file" id="arquivoCSV" accept=".csv">
-
-  <button onclick="importarCSV()">
-    📥 Importar CSV
-  </button>
-
-  <button class="btn-lote" onclick="salvarSelecionados()">
-    💾 Salvar Selecionados
-  </button>
-
+  <button class="btn-lote" onclick="salvarSelecionados()">💾 Salvar Selecionados</button>
 </div>
 
 <table id="tabela">
@@ -223,7 +213,7 @@ tr.atraso-alto:hover {
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwEmWMMQAd-Sm4dlu1gFzkp-TThPSNCDkIepdLm4MM8OGeK5MXeCzZe6Mf_Wec9LE6o/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwI4rXeSdViPoPqPgrQqDfBt5dbFmfo1oCeP3VPv-K0b7WelVm0xpDcfIl3yNguK5OL/exec";
 let filtroAtual = "TODOS";
 
 function formatarData(data) {
@@ -452,27 +442,6 @@ setTimeout(() => {
   btnLote.disabled = false;
 }, 2000);
   
-  async function importarCSV() {
-
-  const arquivo = document.getElementById("arquivoCSV").files[0];
-
-  if (!arquivo) {
-    alert("Selecione um arquivo CSV");
-    return;
-  }
-
-  const texto = await arquivo.text();
-
-  await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      importarCSV: true,
-      conteudo: texto
-    })
-  });
-
-  alert("CSV importado com sucesso!");
-
   carregarDados();
 }
 
