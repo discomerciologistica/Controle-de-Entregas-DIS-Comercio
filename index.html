@@ -175,7 +175,17 @@ tr.atraso-alto:hover {
 </div>
 
 <div class="acoes">
-  <button class="btn-lote" onclick="salvarSelecionados()">💾 Salvar Selecionados</button>
+
+  <button class="btn-lote" onclick="salvarSelecionados()">
+    💾 carregarDados
+  </button>
+
+  <input type="file" id="csvFile" accept=".csv">
+
+  <button onclick="importarCSV()">
+    📂 Importar CSV
+  </button>
+
 </div>
 
 <table id="tabela">
@@ -437,11 +447,39 @@ btnLote.style.background = "#28a745";
 btnLote.disabled = true;
 
 setTimeout(() => {
-  btnLote.textContent = "💾 Salvar Selecionados";
+  btnLote.textContent = "💾 carregarDados";
   btnLote.style.background = "#ff9800";
   btnLote.disabled = false;
 }, 2000);
   
+}
+async function importarCSV() {
+
+  const arquivo =
+    document.getElementById("csvFile").files[0];
+
+  if (!arquivo) {
+    alert("Selecione um CSV");
+    return;
+  }
+
+  const texto = await arquivo.text();
+
+  const linhas = texto
+    .split(/\r?\n/)
+    .filter(l => l.trim() !== "")
+    .map(l => l.split(";"));
+
+  const resposta = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      importarCSV: true,
+      linhas: linhas.slice(1)
+    })
+  });
+
+  alert(await resposta.text());
+
   carregarDados();
 }
 
