@@ -88,12 +88,31 @@
       background: #007bff;
       color: white;
       padding: 8px;
+      white-space: nowrap;
     }
 
     td {
       padding: 6px;
       border-bottom: 1px solid #ddd;
       text-align: center;
+      vertical-align: middle;
+    }
+
+    /* Coluna Motivo: quebra linha e largura mínima garantida */
+    td.col-motivo {
+      text-align: left;
+      white-space: normal;
+      word-break: break-word;
+      min-width: 180px;
+      max-width: 300px;
+      line-height: 1.4;
+    }
+
+    td.col-motivo input {
+      width: 100%;
+      white-space: normal;
+      word-break: break-word;
+      box-sizing: border-box;
     }
 
     tr:nth-child(even) {
@@ -148,6 +167,16 @@
       font-weight: bold;
     }
 
+    .btn-exportar {
+      background: #17a2b8;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
     tr.atraso-alto {
       background: #ffe5e5 !important;
     }
@@ -192,6 +221,10 @@
     <button class="btn-importar" onclick="importarCSV()">
       📂 Importar CSV
     </button>
+
+    <button class="btn-exportar" onclick="exportarExcel()">
+      📊 Exportar Excel
+    </button>
   </div>
 
   <div class="tabela-wrapper">
@@ -228,6 +261,9 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbwI4rXeSdViPoPqPgrQqDfBt5dbFmfo1oCeP3VPv-K0b7WelVm0xpDcfIl3yNguK5OL/exec";
 let filtroAtual = "TODOS";
 
+// Guarda os dados brutos para exportar com tudo
+let dadosGlobais = [];
+
 function formatarData(data) {
   if (!data || isNaN(new Date(data))) return data;
   const d = new Date(data);
@@ -259,6 +295,9 @@ async function carregarDados() {
 
   const res = await fetch(API_URL);
   const dados = await res.json();
+
+  // Salva os dados brutos globalmente para o exportar
+  dadosGlobais = dados;
 
   tbody.innerHTML = "";
 
@@ -305,7 +344,7 @@ async function carregarDados() {
           <option value="NAO" ${atrasoAtual === "NAO" ? "selected" : ""}>NÃO</option>
         </select>
       </td>
-      <td><input value="${motivoAtual}" /></td>
+      <td class="col-motivo"><input value="${motivoAtual}" /></td>
       <td>${formatarData(dataResposta)}</td>
       <td><button onclick="salvar(this)">Salvar</button></td>
     `;
@@ -395,7 +434,6 @@ async function importarCSV() {
     return;
   }
 
-  // Pede a senha antes de qualquer coisa
   const senha = prompt("🔒 Digite a senha para importar:");
   if (!senha) return;
 
@@ -444,6 +482,71 @@ async function importarCSV() {
   fileInput.value = "";
 
   if (resultado.includes("sucesso")) carregarDados();
+}
+
+function exportarExcel() {
+  if (!dadosGlobais || dadosGlobais.length < 2) {
+    alert("Nenhum dado carregado para exportar!");
+    return;
+  }
+
+  // Cabeçalho igual ao da tabela (sem checkbox e sem coluna Ação)
+  const cabecalho = [
+    "Pedido", "NF", "Transp", "Cidade", "Coleta", "Previsão",
+    "UF", "Atraso dias", "Status", "Agendado", "Em rota",
+    "Status Resp", "Atraso?", "Motivo", "Data Resp"
+  ];
+
+  // Monta linhas: pega os dados brutos e calcula Status Resp igual à tela
+  const linhas = dadosGlobais.slice(1).map(linha => {
+    const atrasoAtual = linha[11] || "";
+    const statusResp  = atrasoAtual ? "RESPONDIDO" : "PENDENTE";
+
+    return [
+      linha[0],                    // Pedido
+      linha[1],                    // NF
+      linha[2],                    // Transp
+      linha[3],                    // Cidade
+      formatarData(linha[4]),      // Coleta
+      formatarData(linha[5]),      // Previsão
+      linha[6],                    // UF
+      linha[7],                    // Atraso dias
+      linha[8],                    // Status
+      linha[9],                    // Agendado
+      formatarData(linha[10]),     // Em rota
+      statusResp,                  // Status Resp
+      linha[11] || "",             // Atraso?
+      linha[12] || "",             // Motivo
+      formatarData(linha[13])      // Data Resp
+    ];
+  });
+
+  // Gera CSV com BOM UTF-8 para o Excel abrir com acentos corretos
+  const todasLinhas = [cabecalho, ...linhas];
+  const csv = todasLinhas
+    .map(row =>
+      row.map(cel => {
+        const v = String(cel ?? "");
+        // Envolve em aspas se tiver vírgula, aspas ou quebra de linha
+        return v.includes(",") || v.includes('"') || v.includes("\n")
+          ? `"${v.replace(/"/g, '""')}"`
+          : v;
+      }).join(";")
+    )
+    .join("\r\n");
+
+  const bom = "\uFEFF";
+  const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
+  const url  = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  const hoje = new Date();
+  const dataHoje = `${String(hoje.getDate()).padStart(2,'0')}-${String(hoje.getMonth()+1).padStart(2,'0')}-${hoje.getFullYear()}`;
+
+  link.href = url;
+  link.download = `entregas_${dataHoje}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 carregarDados();
