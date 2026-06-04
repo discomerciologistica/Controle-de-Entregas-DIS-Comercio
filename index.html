@@ -72,10 +72,16 @@
       font-weight: bold;
     }
 
+    /* FIX: tabela-wrapper envolve a tabela para responsividade mobile */
+    .tabela-wrapper {
+      overflow-x: auto;
+      width: 100%;
+      margin-top: 15px;
+    }
+
     table {
       border-collapse: collapse;
       width: 100%;
-      margin-top: 15px;
       background: white;
     }
 
@@ -111,12 +117,16 @@
       font-weight: bold;
     }
 
-    select, input {
+    select, input[type="text"], input:not([type]) {
       width: 100%;
     }
 
     .acoes {
       margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
     .btn-lote {
@@ -126,23 +136,27 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      font-weight: bold;
     }
 
-    /* 11 - Tabela responsiva no mobile */
-.tabela-wrapper {
-  overflow-x: auto;
-  width: 100%;
-}
+    .btn-importar {
+      background: #6c757d;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
 
-/* 12 - Highlight linhas com atraso alto */
-tr.atraso-alto {
-  background: #ffe5e5 !important;
-}
+    /* Highlight linhas com atraso alto */
+    tr.atraso-alto {
+      background: #ffe5e5 !important;
+    }
 
-tr.atraso-alto:hover {
-  background: #ffcccc !important;
-}
-
+    tr.atraso-alto:hover {
+      background: #ffcccc !important;
+    }
   </style>
 </head>
 
@@ -150,75 +164,68 @@ tr.atraso-alto:hover {
 
 <div class="container">
 
-<h2>🚚 Entregas Pendentes</h2>
+  <h2>🚚 Entregas Pendentes</h2>
 
-<div class="filtros">
-  <button class="btn-todos ativo" onclick="filtrar('TODOS', this)">Todos</button>
-  <button class="btn-pendente" onclick="filtrar('PENDENTE', this)">Pendentes</button>
-  <button class="btn-respondido" onclick="filtrar('RESPONDIDO', this)">Respondidos</button>
-</div>
-
-<div class="cards">
-
-  <div class="card total" id="totalCard">
-    Todos: <span class="numero-total">0</span>
+  <div class="filtros">
+    <button class="btn-todos ativo" onclick="filtrar('TODOS', this)">Todos</button>
+    <button class="btn-pendente" onclick="filtrar('PENDENTE', this)">Pendentes</button>
+    <button class="btn-respondido" onclick="filtrar('RESPONDIDO', this)">Respondidos</button>
   </div>
 
-  <div class="card pendente" id="pendenteCard">
-    Pendentes: <span class="numero-pendente">0</span>
+  <div class="cards">
+    <div class="card total" id="totalCard">
+      Todos: <span class="numero-total">0</span>
+    </div>
+    <div class="card pendente" id="pendenteCard">
+      Pendentes: <span class="numero-pendente">0</span>
+    </div>
+    <div class="card respondido" id="respondidoCard">
+      Respondidos: <span class="numero-respondido">0</span>
+    </div>
   </div>
 
-  <div class="card respondido" id="respondidoCard">
-    Respondidos: <span class="numero-respondido">0</span>
+  <div class="acoes">
+    <!-- FIX 1: texto do botão corrigido -->
+    <button class="btn-lote" onclick="salvarSelecionados()">
+      💾 Salvar Selecionados
+    </button>
+
+    <input type="file" id="csvFile" accept=".csv">
+
+    <!-- FIX 2: botão importar com estilo próprio -->
+    <button class="btn-importar" onclick="importarCSV()">
+      📂 Importar CSV
+    </button>
   </div>
 
-</div>
-
-<div class="acoes">
-
-  <button class="btn-lote" onclick="salvarSelecionados()">
-    💾 carregarDados
-  </button>
-
-  <input type="file" id="csvFile" accept=".csv">
-
-  <button onclick="importarCSV()">
-    📂 Importar CSV
-  </button>
-
-</div>
-
-<table id="tabela">
-  <thead>
-    <tr>
-      <th><input type="checkbox" onclick="selecionarTodos(this)"></th>
-      <th>Pedido</th>
-      <th>NF</th>
-      <th>Transp</th>
-      <th>Cidade</th>
-      <th>Coleta</th>
-      <th>Previsão</th>
-      <th>UF</th>
-      <th>Atraso dias</th>
-      <th>Status</th>
-      <th>Agendado</th>
-      <th>Em rota</th>
-      <th>Status Resp</th>
-      <th>Atraso?</th>
-      <th>Motivo</th>
-      <th>Data Resp</th>
-      <th>Ação</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-</div>
-
+  <!-- FIX 3: tabela-wrapper correto — apenas uma <table id="tabela"> dentro do container -->
   <div class="tabela-wrapper">
-  <table id="tabela">
-    ...
-  </table>
+    <table id="tabela">
+      <thead>
+        <tr>
+          <th><input type="checkbox" onclick="selecionarTodos(this)"></th>
+          <th>Pedido</th>
+          <th>NF</th>
+          <th>Transp</th>
+          <th>Cidade</th>
+          <th>Coleta</th>
+          <th>Previsão</th>
+          <th>UF</th>
+          <th>Atraso dias</th>
+          <th>Status</th>
+          <th>Agendado</th>
+          <th>Em rota</th>
+          <th>Status Resp</th>
+          <th>Atraso?</th>
+          <th>Motivo</th>
+          <th>Data Resp</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
 </div>
 
 <script>
@@ -228,20 +235,15 @@ let filtroAtual = "TODOS";
 
 function formatarData(data) {
   if (!data || isNaN(new Date(data))) return data;
-
   const d = new Date(data);
-
   return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()}`;
 }
 
 function filtrar(tipo, btn) {
   filtroAtual = tipo;
-
   document.querySelectorAll(".filtros button")
     .forEach(b => b.classList.remove("ativo"));
-
   btn.classList.add("ativo");
-
   carregarDados();
 }
 
@@ -251,7 +253,6 @@ function selecionarTodos(master) {
 }
 
 async function carregarDados() {
-
   const tbody = document.querySelector("#tabela tbody");
   tbody.innerHTML = `
     <tr>
@@ -271,77 +272,49 @@ async function carregarDados() {
   let respondidos = 0;
 
   dados.slice(1).forEach(linha => {
-
     const atrasoAtual = linha[11] || "";
     const motivoAtual = linha[12] || "";
     const dataResposta = linha[13] || "";
-
     const status = atrasoAtual ? "RESPONDIDO" : "PENDENTE";
 
     total++;
-
-    if (status === "RESPONDIDO") {
-      respondidos++;
-    } else {
-      pendentes++;
-    }
+    if (status === "RESPONDIDO") { respondidos++; } else { pendentes++; }
 
     if (filtroAtual === "PENDENTE" && status !== "PENDENTE") return;
     if (filtroAtual === "RESPONDIDO" && status !== "RESPONDIDO") return;
 
     const tr = document.createElement("tr");
     const diasAtraso = parseInt(linha[7]) || 0;
-if (diasAtraso > 5) {
-  tr.classList.add("atraso-alto");
-}
+    if (diasAtraso > 5) {
+      tr.classList.add("atraso-alto");
+    }
 
     tr.innerHTML = `
       <td><input type="checkbox" class="checkLinha"></td>
-
       <td>${linha[0]}</td>
       <td>${linha[1]}</td>
       <td>${linha[2]}</td>
       <td>${linha[3]}</td>
-
       <td>${formatarData(linha[4])}</td>
       <td>${formatarData(linha[5])}</td>
-
       <td>${linha[6]}</td>
       <td>${linha[7]}</td>
       <td>${linha[8]}</td>
       <td>${linha[9]}</td>
-
       <td>${formatarData(linha[10])}</td>
-
       <td class="${status === 'RESPONDIDO' ? 'status-respondido' : 'status-pendente'}">
         ${status}
       </td>
-
       <td>
         <select>
           <option value="">-</option>
-
-          <option value="SIM"
-            ${atrasoAtual === "SIM" ? "selected" : ""}>
-            SIM
-          </option>
-
-          <option value="NAO"
-            ${atrasoAtual === "NAO" ? "selected" : ""}>
-            NÃO
-          </option>
+          <option value="SIM" ${atrasoAtual === "SIM" ? "selected" : ""}>SIM</option>
+          <option value="NAO" ${atrasoAtual === "NAO" ? "selected" : ""}>NÃO</option>
         </select>
       </td>
-
-      <td>
-        <input value="${motivoAtual}" />
-      </td>
-
+      <td><input value="${motivoAtual}" /></td>
       <td>${formatarData(dataResposta)}</td>
-
-      <td>
-        <button onclick="salvar(this)">Salvar</button>
-      </td>
+      <td><button onclick="salvar(this)">Salvar</button></td>
     `;
 
     tbody.appendChild(tr);
@@ -349,125 +322,135 @@ if (diasAtraso > 5) {
 
   document.getElementById("totalCard").innerHTML =
     `Todos: <span class="numero-total">${total}</span>`;
-
   document.getElementById("pendenteCard").innerHTML =
     `Pendentes: <span class="numero-pendente">${pendentes}</span>`;
-
   document.getElementById("respondidoCard").innerHTML =
     `Respondidos: <span class="numero-respondido">${respondidos}</span>`;
 }
 
 async function salvar(btn) {
-
   const tr = btn.parentElement.parentElement;
-
   const tds = tr.querySelectorAll("td");
-
   const nf = tds[2].innerText;
-
-  const atraso = tds[13]
-    .querySelector("select").value;
-
-  const motivo = tds[14]
-    .querySelector("input").value;
+  const atraso = tds[13].querySelector("select").value;
+  const motivo = tds[14].querySelector("input").value;
 
   await fetch(API_URL, {
     method: "POST",
-
-    body: JSON.stringify({
-      nf,
-      atraso,
-      motivo
-    })
+    body: JSON.stringify({ nf, atraso, motivo })
   });
 
   btn.textContent = "✅ Salvo!";
-btn.style.background = "#28a745";
-btn.style.color = "white";
-btn.disabled = true;
+  btn.style.background = "#28a745";
+  btn.style.color = "white";
+  btn.disabled = true;
 
-setTimeout(() => {
-  btn.textContent = "Salvar";
-  btn.style.background = "";
-  btn.style.color = "";
-  btn.disabled = false;
-}, 2000);
-
-  carregarDados();
+  // FIX 4: carregarDados() chamado após o feedback, não imediatamente
+  setTimeout(() => {
+    btn.textContent = "Salvar";
+    btn.style.background = "";
+    btn.style.color = "";
+    btn.disabled = false;
+    carregarDados();
+  }, 2000);
 }
 
 async function salvarSelecionados() {
-
   const linhas = document.querySelectorAll("#tabela tbody tr");
-
   const lote = [];
 
   linhas.forEach(tr => {
-
     const check = tr.querySelector(".checkLinha");
-
     if (check && check.checked) {
-
       const tds = tr.querySelectorAll("td");
-
       const nf = tds[2].innerText;
-
-      const atraso = tds[13]
-        .querySelector("select").value;
-
-      const motivo = tds[14]
-        .querySelector("input").value;
-
+      const atraso = tds[13].querySelector("select").value;
+      const motivo = tds[14].querySelector("input").value;
       if (atraso) {
-        lote.push({
-          nf,
-          atraso,
-          motivo
-        });
+        lote.push({ nf, atraso, motivo });
       }
     }
   });
 
   if (lote.length === 0) {
-    alert("Selecione pelo menos uma linha!");
+    alert("Selecione pelo menos uma linha preenchida com Atraso!");
     return;
   }
 
+  const btnLote = document.querySelector(".btn-lote");
+  btnLote.textContent = "⏳ Salvando...";
+  btnLote.disabled = true;
+
   await fetch(API_URL, {
     method: "POST",
-
-    body: JSON.stringify({
-      lote
-    })
+    body: JSON.stringify({ lote })
   });
 
-  const btnLote = document.querySelector(".btn-lote");
-btnLote.textContent = "✅ Lote Salvo!";
-btnLote.style.background = "#28a745";
-btnLote.disabled = true;
+  btnLote.textContent = "✅ Lote Salvo!";
+  btnLote.style.background = "#28a745";
 
-setTimeout(() => {
-  btnLote.textContent = "💾 carregarDados";
-  btnLote.style.background = "#ff9800";
-  btnLote.disabled = false;
-}, 2000);
-  
+  // FIX 5: carregarDados() após salvar em lote (estava faltando)
+  setTimeout(() => {
+    btnLote.textContent = "💾 Salvar Selecionados";
+    btnLote.style.background = "#ff9800";
+    btnLote.disabled = false;
+    carregarDados();
+  }, 2000);
 }
-async function importarCSV() {
 
-  alert("Entrou na função");
+// FIX 6: importarCSV() agora lê o arquivo CSV real selecionado pelo usuário
+async function importarCSV() {
+  const fileInput = document.getElementById("csvFile");
+
+  if (!fileInput.files.length) {
+    alert("Selecione um arquivo CSV primeiro!");
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const texto = await file.text();
+
+  // Detecta separador (vírgula ou ponto e vírgula)
+  const separador = texto.includes(";") ? ";" : ",";
+
+  const linhas = texto
+    .trim()
+    .split("\n")
+    .map(linha =>
+      linha.split(separador).map(cel => cel.trim().replace(/^"|"$/g, ""))
+    );
+
+  if (linhas.length < 2) {
+    alert("CSV vazio ou sem dados!");
+    return;
+  }
+
+  const confirmacao = confirm(
+    `Importar ${linhas.length - 1} linha(s) do arquivo "${file.name}"?\n\nATENÇÃO: Isso substituirá todos os dados da aba!`
+  );
+
+  if (!confirmacao) return;
+
+  const btnImportar = document.querySelector(".btn-importar");
+  btnImportar.textContent = "⏳ Importando...";
+  btnImportar.disabled = true;
 
   const resposta = await fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
       importarCSV: true,
-      linhas: [["TESTE", "123"]]
+      linhas: linhas
     })
   });
 
-  const texto = await resposta.text();
+  const resultado = await resposta.text();
+  alert(resultado);
 
-  alert(texto);
+  btnImportar.textContent = "📂 Importar CSV";
+  btnImportar.disabled = false;
+  fileInput.value = "";
+
+  carregarDados();
 }
 
 carregarDados();
