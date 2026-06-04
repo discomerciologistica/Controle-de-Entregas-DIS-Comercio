@@ -72,7 +72,6 @@
       font-weight: bold;
     }
 
-    /* FIX: tabela-wrapper envolve a tabela para responsividade mobile */
     .tabela-wrapper {
       overflow-x: auto;
       width: 100%;
@@ -149,7 +148,6 @@
       font-weight: bold;
     }
 
-    /* Highlight linhas com atraso alto */
     tr.atraso-alto {
       background: #ffe5e5 !important;
     }
@@ -185,20 +183,17 @@
   </div>
 
   <div class="acoes">
-    <!-- FIX 1: texto do botão corrigido -->
     <button class="btn-lote" onclick="salvarSelecionados()">
       💾 Salvar Selecionados
     </button>
 
     <input type="file" id="csvFile" accept=".csv">
 
-    <!-- FIX 2: botão importar com estilo próprio -->
     <button class="btn-importar" onclick="importarCSV()">
       📂 Importar CSV
     </button>
   </div>
 
-  <!-- FIX 3: tabela-wrapper correto — apenas uma <table id="tabela"> dentro do container -->
   <div class="tabela-wrapper">
     <table id="tabela">
       <thead>
@@ -285,9 +280,7 @@ async function carregarDados() {
 
     const tr = document.createElement("tr");
     const diasAtraso = parseInt(linha[7]) || 0;
-    if (diasAtraso > 5) {
-      tr.classList.add("atraso-alto");
-    }
+    if (diasAtraso > 5) tr.classList.add("atraso-alto");
 
     tr.innerHTML = `
       <td><input type="checkbox" class="checkLinha"></td>
@@ -345,7 +338,6 @@ async function salvar(btn) {
   btn.style.color = "white";
   btn.disabled = true;
 
-  // FIX 4: carregarDados() chamado após o feedback, não imediatamente
   setTimeout(() => {
     btn.textContent = "Salvar";
     btn.style.background = "";
@@ -366,9 +358,7 @@ async function salvarSelecionados() {
       const nf = tds[2].innerText;
       const atraso = tds[13].querySelector("select").value;
       const motivo = tds[14].querySelector("input").value;
-      if (atraso) {
-        lote.push({ nf, atraso, motivo });
-      }
+      if (atraso) lote.push({ nf, atraso, motivo });
     }
   });
 
@@ -389,7 +379,6 @@ async function salvarSelecionados() {
   btnLote.textContent = "✅ Lote Salvo!";
   btnLote.style.background = "#28a745";
 
-  // FIX 5: carregarDados() após salvar em lote (estava faltando)
   setTimeout(() => {
     btnLote.textContent = "💾 Salvar Selecionados";
     btnLote.style.background = "#ff9800";
@@ -398,7 +387,6 @@ async function salvarSelecionados() {
   }, 2000);
 }
 
-// FIX 6: importarCSV() agora lê o arquivo CSV real selecionado pelo usuário
 async function importarCSV() {
   const fileInput = document.getElementById("csvFile");
 
@@ -445,7 +433,6 @@ async function importarCSV() {
 
   const resposta = await fetch(API_URL, {
     method: "POST",
-    // senha vai junto com os dados, validada só no Apps Script
     body: JSON.stringify({ importarCSV: true, senha: senha, linhas: linhas })
   });
 
@@ -456,56 +443,7 @@ async function importarCSV() {
   btnImportar.disabled = false;
   fileInput.value = "";
 
-  // Só recarrega se importou com sucesso
   if (resultado.includes("sucesso")) carregarDados();
-}
-  }
-
-  const file = fileInput.files[0];
-
-  // Lê com Latin-1 (encoding padrão de CSVs exportados pelo Excel no Brasil)
-  const texto = await new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = () => res(r.result);
-    r.onerror = rej;
-    r.readAsText(file, "iso-8859-1");
-  });
-
-  const separador = texto.includes(";") ? ";" : ",";
-
-  const linhas = texto
-    .trim()
-    .split("\n")
-    .map(linha =>
-      linha.split(separador).map(cel => cel.trim().replace(/\r/g, "").replace(/^"|"$/g, ""))
-    );
-
-  if (linhas.length < 2) {
-    alert("CSV vazio ou sem dados!");
-    return;
-  }
-
-  const confirmacao = confirm(
-    `Importar ${linhas.length - 1} linha(s) do arquivo "${file.name}"?\n\nATENÇÃO: Isso substituirá todos os dados da aba!`
-  );
-  if (!confirmacao) return;
-
-  const btnImportar = document.querySelector(".btn-importar");
-  btnImportar.textContent = "⏳ Importando...";
-  btnImportar.disabled = true;
-
-  const resposta = await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({ importarCSV: true, linhas: linhas })
-  });
-
-  const resultado = await resposta.text();
-  alert(resultado);
-
-  btnImportar.textContent = "📂 Importar CSV";
-  btnImportar.disabled = false;
-  fileInput.value = "";
-  carregarDados();
 }
 
 carregarDados();
