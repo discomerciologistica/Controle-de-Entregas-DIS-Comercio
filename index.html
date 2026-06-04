@@ -455,36 +455,20 @@ setTimeout(() => {
 }
 async function importarCSV() {
 
-  const arquivo =
-    document.getElementById("csvFile").files[0];
-
-  if (!arquivo) {
-    alert("Selecione um CSV");
-    return;
-  }
-
-  const texto = await arquivo.text();
-
-  const linhas = texto
-    .split(/\r?\n/)
-    .filter(l => l.trim() !== "")
-    .map(l => l.split(";"));
+  alert("Entrou na função");
 
   const resposta = await fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
       importarCSV: true,
-      linhas: linhas.slice(1)
+      linhas: [["TESTE", "123"]]
     })
   });
 
-  alert(await resposta.text());
+  const texto = await resposta.text();
 
-  carregarDados();
+  alert(texto);
 }
-
-carregarDados();
-
 </script>
 
 </body>
