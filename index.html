@@ -408,16 +408,22 @@ async function importarCSV() {
   }
 
   const file = fileInput.files[0];
-  const texto = await file.text();
 
-  // Detecta separador (vírgula ou ponto e vírgula)
+  // Lê com Latin-1 (encoding padrão de CSVs exportados pelo Excel no Brasil)
+  const texto = await new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = rej;
+    r.readAsText(file, "iso-8859-1");
+  });
+
   const separador = texto.includes(";") ? ";" : ",";
 
   const linhas = texto
     .trim()
     .split("\n")
     .map(linha =>
-      linha.split(separador).map(cel => cel.trim().replace(/^"|"$/g, ""))
+      linha.split(separador).map(cel => cel.trim().replace(/\r/g, "").replace(/^"|"$/g, ""))
     );
 
   if (linhas.length < 2) {
@@ -428,7 +434,6 @@ async function importarCSV() {
   const confirmacao = confirm(
     `Importar ${linhas.length - 1} linha(s) do arquivo "${file.name}"?\n\nATENÇÃO: Isso substituirá todos os dados da aba!`
   );
-
   if (!confirmacao) return;
 
   const btnImportar = document.querySelector(".btn-importar");
@@ -437,10 +442,7 @@ async function importarCSV() {
 
   const resposta = await fetch(API_URL, {
     method: "POST",
-    body: JSON.stringify({
-      importarCSV: true,
-      linhas: linhas
-    })
+    body: JSON.stringify({ importarCSV: true, linhas: linhas })
   });
 
   const resultado = await resposta.text();
@@ -449,7 +451,6 @@ async function importarCSV() {
   btnImportar.textContent = "📂 Importar CSV";
   btnImportar.disabled = false;
   fileInput.value = "";
-
   carregarDados();
 }
 
