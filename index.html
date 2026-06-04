@@ -407,6 +407,60 @@ async function importarCSV() {
     return;
   }
 
+  // Pede a senha antes de qualquer coisa
+  const senha = prompt("🔒 Digite a senha para importar:");
+  if (!senha) return;
+
+  const file = fileInput.files[0];
+
+  const texto = await new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = rej;
+    r.readAsText(file, "iso-8859-1");
+  });
+
+  const separador = texto.includes(";") ? ";" : ",";
+
+  const linhas = texto
+    .trim()
+    .split("\n")
+    .map(linha =>
+      linha.split(separador).map(cel => cel.trim().replace(/\r/g, "").replace(/^"|"$/g, ""))
+    );
+
+  if (linhas.length < 2) {
+    alert("CSV vazio ou sem dados!");
+    return;
+  }
+
+  const confirmacao = confirm(
+    `Importar ${linhas.length - 1} linha(s) do arquivo "${file.name}"?\n\nATENÇÃO: Isso substituirá todos os dados da aba!`
+  );
+  if (!confirmacao) return;
+
+  const btnImportar = document.querySelector(".btn-importar");
+  btnImportar.textContent = "⏳ Importando...";
+  btnImportar.disabled = true;
+
+  const resposta = await fetch(API_URL, {
+    method: "POST",
+    // senha vai junto com os dados, validada só no Apps Script
+    body: JSON.stringify({ importarCSV: true, senha: senha, linhas: linhas })
+  });
+
+  const resultado = await resposta.text();
+  alert(resultado);
+
+  btnImportar.textContent = "📂 Importar CSV";
+  btnImportar.disabled = false;
+  fileInput.value = "";
+
+  // Só recarrega se importou com sucesso
+  if (resultado.includes("sucesso")) carregarDados();
+}
+  }
+
   const file = fileInput.files[0];
 
   // Lê com Latin-1 (encoding padrão de CSVs exportados pelo Excel no Brasil)
