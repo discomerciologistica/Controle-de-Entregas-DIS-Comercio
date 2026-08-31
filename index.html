@@ -147,6 +147,22 @@
       flex-wrap: wrap;
     }
 
+    .acoes-grupo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px;
+      border-radius: 8px;
+      background: #f4f6f8;
+      flex-wrap: wrap;
+    }
+
+    .acoes-grupo strong {
+      font-size: 13px;
+      color: #555;
+      margin-right: 4px;
+    }
+
     .btn-lote {
       background: #ff9800;
       color: white;
@@ -169,6 +185,26 @@
 
     .btn-exportar {
       background: #17a2b8;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-modelo {
+      background: #6f42c1;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-resp-lote {
+      background: #20c997;
       color: white;
       padding: 10px;
       border: none;
@@ -211,19 +247,32 @@
     </div>
   </div>
 
+  <!-- Fluxo para a TRANSPORTADORA responder em lote -->
+  <div class="acoes-grupo">
+    <strong>📨 Resposta em lote (transportadora):</strong>
+    <button class="btn-modelo" onclick="exportarModeloTransportadora()">
+      📥 Baixar modelo (NFs pendentes)
+    </button>
+    <input type="file" id="csvRespostas" accept=".csv">
+    <button class="btn-resp-lote" onclick="importarRespostasTransportadora()">
+      📤 Importar respostas preenchidas
+    </button>
+  </div>
+
+  <!-- Ações internas / administrativas -->
   <div class="acoes">
     <button class="btn-lote" onclick="salvarSelecionados()">
-      💾 Salvar Selecionados
+      💾 Salvar selecionados (manual)
     </button>
 
     <input type="file" id="csvFile" accept=".csv">
 
     <button class="btn-importar" onclick="importarCSV()">
-      📂 Importar CSV
+      📂 Importar planilha base (Admin)
     </button>
 
     <button class="btn-exportar" onclick="exportarExcel()">
-      📊 Exportar Excel
+      📊 Exportar tudo (Excel/CSV)
     </button>
   </div>
 
@@ -244,7 +293,6 @@
           <th>Agendado</th>
           <th>Em rota</th>
           <th>Status Resp</th>
-          <th>Atraso?</th>
           <th>Motivo</th>
           <th>Data Resp</th>
           <th>Ação</th>
@@ -287,7 +335,7 @@ async function carregarDados() {
   const tbody = document.querySelector("#tabela tbody");
   tbody.innerHTML = `
     <tr>
-      <td colspan="17" style="text-align:center; padding: 30px; color: #888; font-size: 16px;">
+      <td colspan="16" style="text-align:center; padding: 30px; color: #888; font-size: 16px;">
         ⏳ Carregando dados...
       </td>
     </tr>
@@ -306,10 +354,11 @@ async function carregarDados() {
   let respondidos = 0;
 
   dados.slice(1).forEach(linha => {
-    const atrasoAtual = linha[11] || "";
+    // Coluna "Atraso?" (índice 11) foi descontinuada.
+    // Status agora depende só de o Motivo estar preenchido.
     const motivoAtual = linha[12] || "";
     const dataResposta = linha[13] || "";
-    const status = atrasoAtual ? "RESPONDIDO" : "PENDENTE";
+    const status = motivoAtual.trim() ? "RESPONDIDO" : "PENDENTE";
 
     total++;
     if (status === "RESPONDIDO") { respondidos++; } else { pendentes++; }
@@ -337,13 +386,6 @@ async function carregarDados() {
       <td class="${status === 'RESPONDIDO' ? 'status-respondido' : 'status-pendente'}">
         ${status}
       </td>
-      <td>
-        <select>
-          <option value="">-</option>
-          <option value="SIM" ${atrasoAtual === "SIM" ? "selected" : ""}>SIM</option>
-          <option value="NAO" ${atrasoAtual === "NAO" ? "selected" : ""}>NÃO</option>
-        </select>
-      </td>
       <td class="col-motivo"><input value="${motivoAtual}" /></td>
       <td>${formatarData(dataResposta)}</td>
       <td><button onclick="salvar(this)">Salvar</button></td>
@@ -364,12 +406,11 @@ async function salvar(btn) {
   const tr = btn.parentElement.parentElement;
   const tds = tr.querySelectorAll("td");
   const nf = tds[2].innerText;
-  const atraso = tds[13].querySelector("select").value;
-  const motivo = tds[14].querySelector("input").value;
+  const motivo = tds[13].querySelector("input").value;
 
   await fetch(API_URL, {
     method: "POST",
-    body: JSON.stringify({ nf, atraso, motivo })
+    body: JSON.stringify({ nf, motivo })
   });
 
   btn.textContent = "✅ Salvo!";
@@ -395,14 +436,13 @@ async function salvarSelecionados() {
     if (check && check.checked) {
       const tds = tr.querySelectorAll("td");
       const nf = tds[2].innerText;
-      const atraso = tds[13].querySelector("select").value;
-      const motivo = tds[14].querySelector("input").value;
-      if (atraso) lote.push({ nf, atraso, motivo });
+      const motivo = tds[13].querySelector("input").value;
+      if (motivo && motivo.trim()) lote.push({ nf, motivo });
     }
   });
 
   if (lote.length === 0) {
-    alert("Selecione pelo menos uma linha preenchida com Atraso!");
+    alert("Selecione pelo menos uma linha com o Motivo preenchido!");
     return;
   }
 
@@ -419,11 +459,140 @@ async function salvarSelecionados() {
   btnLote.style.background = "#28a745";
 
   setTimeout(() => {
-    btnLote.textContent = "💾 Salvar Selecionados";
+    btnLote.textContent = "💾 Salvar selecionados (manual)";
     btnLote.style.background = "#ff9800";
     btnLote.disabled = false;
     carregarDados();
   }, 2000);
+}
+
+// ═══════════════════════════════════════
+// Utilitário: parse de CSV (usado tanto no
+// import admin quanto no import de respostas)
+// ═══════════════════════════════════════
+async function lerCSV(file) {
+  const texto = await new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = rej;
+    r.readAsText(file, "iso-8859-1");
+  });
+
+  const separador = texto.includes(";") ? ";" : ",";
+
+  return texto
+    .trim()
+    .split("\n")
+    .map(linha =>
+      linha.split(separador).map(cel => cel.trim().replace(/\r/g, "").replace(/^"|"$/g, ""))
+    );
+}
+
+// ═══════════════════════════════════════
+// Modelo para a transportadora: exporta só
+// NF + Motivo (vazio) das NFs pendentes
+// ═══════════════════════════════════════
+function exportarModeloTransportadora() {
+  if (!dadosGlobais || dadosGlobais.length < 2) {
+    alert("Nenhum dado carregado para gerar o modelo!");
+    return;
+  }
+
+  const pendentes = dadosGlobais.slice(1).filter(linha => {
+    const motivoAtual = linha[12] || "";
+    return !motivoAtual.trim();
+  });
+
+  if (pendentes.length === 0) {
+    alert("Não há NFs pendentes no momento!");
+    return;
+  }
+
+  const cabecalho = ["NF", "Motivo"];
+  const linhas = pendentes.map(linha => [linha[1], ""]);
+
+  const todasLinhas = [cabecalho, ...linhas];
+  const csv = todasLinhas
+    .map(row => row.map(cel => {
+      const v = String(cel ?? "");
+      return v.includes(";") || v.includes('"') || v.includes("\n")
+        ? `"${v.replace(/"/g, '""')}"`
+        : v;
+    }).join(";"))
+    .join("\r\n");
+
+  const bom = "\uFEFF";
+  const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  const hoje = new Date();
+  const dataHoje = `${String(hoje.getDate()).padStart(2,'0')}-${String(hoje.getMonth()+1).padStart(2,'0')}-${hoje.getFullYear()}`;
+
+  link.href = url;
+  link.download = `modelo_transportadora_${dataHoje}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════
+// Importa o arquivo que a transportadora
+// preencheu (NF + Motivo) e salva em lote
+// ═══════════════════════════════════════
+async function importarRespostasTransportadora() {
+  const fileInput = document.getElementById("csvRespostas");
+
+  if (!fileInput.files.length) {
+    alert("Selecione o arquivo preenchido pela transportadora primeiro!");
+    return;
+  }
+
+  const linhas = await lerCSV(fileInput.files[0]);
+
+  if (linhas.length < 2) {
+    alert("Arquivo vazio ou sem dados!");
+    return;
+  }
+
+  // Detecta as colunas NF e Motivo pelo cabeçalho (não depende da ordem)
+  const cabecalho = linhas[0].map(c => c.toLowerCase());
+  const idxNf = cabecalho.findIndex(c => c.includes("nf"));
+  const idxMotivo = cabecalho.findIndex(c => c.includes("motivo"));
+
+  if (idxNf === -1 || idxMotivo === -1) {
+    alert("Não encontrei as colunas 'NF' e 'Motivo' no cabeçalho do arquivo.");
+    return;
+  }
+
+  const respostas = linhas.slice(1)
+    .map(linha => ({ nf: linha[idxNf], motivo: linha[idxMotivo] }))
+    .filter(r => r.nf && r.motivo && r.motivo.trim());
+
+  if (respostas.length === 0) {
+    alert("Nenhuma linha com Motivo preenchido foi encontrada no arquivo.");
+    return;
+  }
+
+  const confirmacao = confirm(`Importar ${respostas.length} resposta(s) da transportadora?`);
+  if (!confirmacao) return;
+
+  const btn = document.querySelector(".btn-resp-lote");
+  btn.textContent = "⏳ Importando...";
+  btn.disabled = true;
+
+  const resposta = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({ responderLote: true, respostas })
+  });
+
+  const resultado = await resposta.text();
+  alert(resultado);
+
+  btn.textContent = "📤 Importar respostas preenchidas";
+  btn.disabled = false;
+  fileInput.value = "";
+
+  carregarDados();
 }
 
 async function importarCSV() {
@@ -437,23 +606,7 @@ async function importarCSV() {
   const senha = prompt("🔒 Digite a senha para importar:");
   if (!senha) return;
 
-  const file = fileInput.files[0];
-
-  const texto = await new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = () => res(r.result);
-    r.onerror = rej;
-    r.readAsText(file, "iso-8859-1");
-  });
-
-  const separador = texto.includes(";") ? ";" : ",";
-
-  const linhas = texto
-    .trim()
-    .split("\n")
-    .map(linha =>
-      linha.split(separador).map(cel => cel.trim().replace(/\r/g, "").replace(/^"|"$/g, ""))
-    );
+  const linhas = await lerCSV(fileInput.files[0]);
 
   if (linhas.length < 2) {
     alert("CSV vazio ou sem dados!");
@@ -461,7 +614,7 @@ async function importarCSV() {
   }
 
   const confirmacao = confirm(
-    `Importar ${linhas.length - 1} linha(s) do arquivo "${file.name}"?\n\nATENÇÃO: Isso substituirá todos os dados da aba!`
+    `Importar ${linhas.length - 1} linha(s) do arquivo "${fileInput.files[0].name}"?\n\nATENÇÃO: Isso substituirá todos os dados da aba!`
   );
   if (!confirmacao) return;
 
@@ -477,7 +630,7 @@ async function importarCSV() {
   const resultado = await resposta.text();
   alert(resultado);
 
-  btnImportar.textContent = "📂 Importar CSV";
+  btnImportar.textContent = "📂 Importar planilha base (Admin)";
   btnImportar.disabled = false;
   fileInput.value = "";
 
@@ -494,13 +647,13 @@ function exportarExcel() {
   const cabecalho = [
     "Pedido", "NF", "Transp", "Cidade", "Coleta", "Previsão",
     "UF", "Atraso dias", "Status", "Agendado", "Em rota",
-    "Status Resp", "Atraso?", "Motivo", "Data Resp"
+    "Status Resp", "Motivo", "Data Resp"
   ];
 
   // Monta linhas: pega os dados brutos e calcula Status Resp igual à tela
   const linhas = dadosGlobais.slice(1).map(linha => {
-    const atrasoAtual = linha[11] || "";
-    const statusResp  = atrasoAtual ? "RESPONDIDO" : "PENDENTE";
+    const motivoAtual = linha[12] || "";
+    const statusResp = motivoAtual.trim() ? "RESPONDIDO" : "PENDENTE";
 
     return [
       linha[0],                    // Pedido
@@ -515,8 +668,7 @@ function exportarExcel() {
       linha[9],                    // Agendado
       formatarData(linha[10]),     // Em rota
       statusResp,                  // Status Resp
-      linha[11] || "",             // Atraso?
-      linha[12] || "",             // Motivo
+      motivoAtual,                 // Motivo
       formatarData(linha[13])      // Data Resp
     ];
   });
