@@ -415,6 +415,26 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbwI4rXeSdViPoPqPgrQqDfBt5dbFmfo1oCeP3VPv-K0b7WelVm0xpDcfIl3yNguK5OL/exec";
 let filtroAtual = "TODOS";
 
+// Faz fetch com um tempo limite: se o Apps Script não responder dentro
+// do prazo, a Promise é rejeitada em vez de ficar pendente para sempre
+// (isso é o que fazia o botão "Importando..." travar sem nenhum erro).
+async function fetchComTimeout(url, options = {}, timeoutMs = 30000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function mensagemDeErro(err) {
+  if (err.name === "AbortError") {
+    return "tempo limite excedido — o Apps Script demorou demais para responder (planilha muito grande, ou o script pode estar aguardando reautorização depois de uma atualização de código).";
+  }
+  return err.message || String(err);
+}
+
 // Guarda os dados brutos para exportar com tudo
 let dadosGlobais = [];
 
@@ -514,23 +534,33 @@ async function salvar(btn) {
   const nf = tds[2].innerText;
   const motivo = tds[13].querySelector("input").value;
 
-  await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({ nf, motivo })
-  });
-
-  btn.textContent = "✅ Salvo!";
-  btn.style.background = "#28a745";
-  btn.style.color = "white";
+  btn.textContent = "⏳ Salvando...";
   btn.disabled = true;
 
-  setTimeout(() => {
+  try {
+    await fetchComTimeout(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ nf, motivo })
+    }, 30000);
+
+    btn.textContent = "✅ Salvo!";
+    btn.style.background = "#28a745";
+    btn.style.color = "white";
+
+    setTimeout(() => {
+      btn.textContent = "Salvar";
+      btn.style.background = "";
+      btn.style.color = "";
+      btn.disabled = false;
+      carregarDados();
+    }, 2000);
+  } catch (err) {
+    alert("❌ Erro ao salvar: " + mensagemDeErro(err));
     btn.textContent = "Salvar";
     btn.style.background = "";
     btn.style.color = "";
     btn.disabled = false;
-    carregarDados();
-  }, 2000);
+  }
 }
 
 async function salvarSelecionados() {
@@ -556,20 +586,27 @@ async function salvarSelecionados() {
   btnLote.textContent = "⏳ Salvando...";
   btnLote.disabled = true;
 
-  await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({ lote })
-  });
+  try {
+    await fetchComTimeout(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ lote })
+    }, 30000);
 
-  btnLote.textContent = "✅ Lote Salvo!";
-  btnLote.style.background = "#28a745";
+    btnLote.textContent = "✅ Lote Salvo!";
+    btnLote.style.background = "#28a745";
 
-  setTimeout(() => {
+    setTimeout(() => {
+      btnLote.textContent = "💾 Salvar selecionados (manual)";
+      btnLote.style.background = "#ff9800";
+      btnLote.disabled = false;
+      carregarDados();
+    }, 2000);
+  } catch (err) {
+    alert("❌ Erro ao salvar lote: " + mensagemDeErro(err));
     btnLote.textContent = "💾 Salvar selecionados (manual)";
     btnLote.style.background = "#ff9800";
     btnLote.disabled = false;
-    carregarDados();
-  }, 2000);
+  }
 }
 
 // ═══════════════════════════════════════
@@ -686,19 +723,22 @@ async function importarRespostasTransportadora() {
   btn.textContent = "⏳ Importando...";
   btn.disabled = true;
 
-  const resposta = await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({ responderLote: true, respostas })
-  });
+  try {
+    const resposta = await fetchComTimeout(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ responderLote: true, respostas })
+    }, 60000);
 
-  const resultado = await resposta.text();
-  alert(resultado);
-
-  btn.textContent = "📤 Importar respostas preenchidas";
-  btn.disabled = false;
-  fileInput.value = "";
-
-  carregarDados();
+    const resultado = await resposta.text();
+    alert(resultado);
+    carregarDados();
+  } catch (err) {
+    alert("❌ Erro ao importar respostas: " + mensagemDeErro(err));
+  } finally {
+    btn.textContent = "📤 Importar respostas preenchidas";
+    btn.disabled = false;
+    fileInput.value = "";
+  }
 }
 
 async function importarCSV() {
@@ -728,19 +768,23 @@ async function importarCSV() {
   btnImportar.textContent = "⏳ Importando...";
   btnImportar.disabled = true;
 
-  const resposta = await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({ importarCSV: true, senha: senha, linhas: linhas })
-  });
+  try {
+    const resposta = await fetchComTimeout(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ importarCSV: true, senha: senha, linhas: linhas })
+    }, 60000);
 
-  const resultado = await resposta.text();
-  alert(resultado);
+    const resultado = await resposta.text();
+    alert(resultado);
 
-  btnImportar.textContent = "📂 Importar planilha base (Admin)";
-  btnImportar.disabled = false;
-  fileInput.value = "";
-
-  if (resultado.includes("sucesso")) carregarDados();
+    if (resultado.includes("sucesso")) carregarDados();
+  } catch (err) {
+    alert("❌ Erro ao importar: " + mensagemDeErro(err));
+  } finally {
+    btnImportar.textContent = "📂 Importar planilha base (Admin)";
+    btnImportar.disabled = false;
+    fileInput.value = "";
+  }
 }
 
 function exportarExcel() {
