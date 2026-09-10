@@ -220,6 +220,82 @@
     tr.atraso-alto:hover {
       background: #ffcccc !important;
     }
+
+    .btn-historico {
+      background: #343a40;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-box {
+      background: white;
+      width: 90%;
+      max-width: 900px;
+      max-height: 85vh;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+    }
+
+    .modal-fechar {
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .modal-busca {
+      margin-bottom: 12px;
+    }
+
+    .modal-busca input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+
+    .modal-tabela-wrapper {
+      overflow-y: auto;
+      flex: 1;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    #tabelaHistorico th {
+      position: sticky;
+      top: 0;
+    }
   </style>
 </head>
 
@@ -274,6 +350,10 @@
     <button class="btn-exportar" onclick="exportarExcel()">
       📊 Exportar tudo (Excel/CSV)
     </button>
+
+    <button class="btn-historico" onclick="abrirHistorico()">
+      📜 Ver Histórico
+    </button>
   </div>
 
   <div class="tabela-wrapper">
@@ -302,6 +382,32 @@
     </table>
   </div>
 
+</div>
+
+<!-- Modal de Histórico -->
+<div id="modalHistorico" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>📜 Histórico de respostas</h3>
+      <button class="modal-fechar" onclick="fecharHistorico()">Fechar ✕</button>
+    </div>
+    <div class="modal-busca">
+      <input type="text" id="buscaHistorico" placeholder="Buscar por NF ou Pedido..." oninput="filtrarHistorico()">
+    </div>
+    <div class="modal-tabela-wrapper">
+      <table id="tabelaHistorico">
+        <thead>
+          <tr>
+            <th>Data/Hora</th>
+            <th>Pedido</th>
+            <th>NF</th>
+            <th>Motivo</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -699,6 +805,81 @@ function exportarExcel() {
   link.download = `entregas_${dataHoje}.csv`;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════
+// Modal de Histórico
+// ═══════════════════════════════════════
+let historicoGlobal = [];
+
+function formatarDataHora(valor) {
+  // Data/Hora já vem formatada como texto do Apps Script (dd/MM/yyyy HH:mm:ss)
+  return valor || "";
+}
+
+async function abrirHistorico() {
+  const modal = document.getElementById("modalHistorico");
+  const tbody = document.querySelector("#tabelaHistorico tbody");
+
+  modal.style.display = "flex";
+  tbody.innerHTML = `
+    <tr><td colspan="4" style="text-align:center; padding:20px; color:#888;">⏳ Carregando histórico...</td></tr>
+  `;
+
+  try {
+    const res = await fetch(`${API_URL}?historico=true`);
+    const dados = await res.json();
+
+    // Ignora o cabeçalho e ordena do mais recente para o mais antigo
+    historicoGlobal = dados.slice(1).reverse();
+
+    renderizarHistorico(historicoGlobal);
+  } catch (err) {
+    tbody.innerHTML = `
+      <tr><td colspan="4" style="text-align:center; padding:20px; color:#dc3545;">Erro ao carregar histórico.</td></tr>
+    `;
+  }
+}
+
+function renderizarHistorico(linhas) {
+  const tbody = document.querySelector("#tabelaHistorico tbody");
+
+  if (linhas.length === 0) {
+    tbody.innerHTML = `
+      <tr><td colspan="4" style="text-align:center; padding:20px; color:#888;">Nenhum registro encontrado.</td></tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = linhas.map(linha => `
+    <tr>
+      <td>${formatarDataHora(linha[0])}</td>
+      <td>${linha[1]}</td>
+      <td>${linha[2]}</td>
+      <td style="text-align:left;">${linha[3]}</td>
+    </tr>
+  `).join("");
+}
+
+function filtrarHistorico() {
+  const termo = document.getElementById("buscaHistorico").value.trim().toLowerCase();
+
+  if (!termo) {
+    renderizarHistorico(historicoGlobal);
+    return;
+  }
+
+  const filtrado = historicoGlobal.filter(linha =>
+    String(linha[1]).toLowerCase().includes(termo) ||
+    String(linha[2]).toLowerCase().includes(termo)
+  );
+
+  renderizarHistorico(filtrado);
+}
+
+function fecharHistorico() {
+  document.getElementById("modalHistorico").style.display = "none";
+  document.getElementById("buscaHistorico").value = "";
 }
 
 carregarDados();
