@@ -467,8 +467,21 @@ async function carregarDados() {
     </tr>
   `;
 
-  const res = await fetch(API_URL);
-  const dados = await res.json();
+  let dados;
+  try {
+    const res = await fetchComTimeout(API_URL, {}, 20000);
+    dados = await res.json();
+  } catch (err) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="16" style="text-align:center; padding: 30px; color: #dc3545; font-size: 15px;">
+          ⚠️ Não foi possível carregar os dados (${mensagemDeErro(err)}).<br>
+          <button onclick="carregarDados()" style="margin-top:10px; padding:8px 16px; cursor:pointer;">🔄 Tentar novamente</button>
+        </td>
+      </tr>
+    `;
+    return;
+  }
 
   // Salva os dados brutos globalmente para o exportar
   dadosGlobais = dados;
@@ -871,7 +884,7 @@ async function abrirHistorico() {
   `;
 
   try {
-    const res = await fetch(`${API_URL}?historico=true`);
+    const res = await fetchComTimeout(`${API_URL}?historico=true`, {}, 20000);
     const dados = await res.json();
 
     // Ignora o cabeçalho e ordena do mais recente para o mais antigo
@@ -880,7 +893,10 @@ async function abrirHistorico() {
     renderizarHistorico(historicoGlobal);
   } catch (err) {
     tbody.innerHTML = `
-      <tr><td colspan="4" style="text-align:center; padding:20px; color:#dc3545;">Erro ao carregar histórico.</td></tr>
+      <tr><td colspan="4" style="text-align:center; padding:20px; color:#dc3545;">
+        ⚠️ Erro ao carregar histórico (${mensagemDeErro(err)}).<br>
+        <button onclick="abrirHistorico()" style="margin-top:10px; padding:6px 14px; cursor:pointer;">🔄 Tentar novamente</button>
+      </td></tr>
     `;
   }
 }
